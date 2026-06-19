@@ -42,13 +42,6 @@ All six initial Phase 3/4 validation concerns have been resolved and evaluated i
 5. **Distance Scaling Autocalibration:** **Resolved** and integrated dynamically from random sphere distance distributions at initialization.
 6. **Rigorous Multi-Seed Validation:** **Resolved** by reporting statistics (mean, std, range) across a 10-seed sweep for all studies.
 
-### Current Open Focus Areas & Research Caveats:
+### Project Deprecation & Halted Research:
 
-1. **The Kernel Mismatch (Production Baseline vs. Deferred Dual-Path):**
-   - **Status:** All validated numbers generated so far use the single-path `MNCAdderFunction` prototype. The dual-path Physical Channel ($C$) + Chemical Bypass ($N$) with LSE smoothing described in Section 2 is deferred as a future research milestone, as changing the gradient landscape could materially alter MESU consolidation dynamics.
-2. **Single-Seed Transformer Tuning Instability:**
-   - **Observation:** The automated hyperparameter tuning sweep for the Transformer Decoder control baseline can exhibit high variance or sensitivity when tuned on a single seed (Seed 0), sometimes failing to find optimal parameters that generalize stably across other seeds.
-3. **Displacement-Metric Interpretation Caveat (Study 2):**
-   - **Observation:** In Study 2 (interference in shared coordinates), a "displaced" fact does not necessarily mean complete forgetting, but rather a representation shift in the shared coordinate space that requires careful semantic classification boundaries.
-4. **Pass/Fail Baseline Calculation:**
-   - **Status:** The verification protocol requires measuring accuracy right after Day 5 training to establish the baseline denominator for the formal $\ge 85\%$ recall metric on Day 10. This is cheap and must be tracked.
+All open focus areas and future research paths (including the dual-path LSE-smoothed model and hardware kernel compilation) have been **officially canceled**. Rigorous stress-testing confirmed that the L1 bottleneck, variance ratchet, and embedding compute overhead present insurmountable barriers to scaling, rendering further development non-viable.

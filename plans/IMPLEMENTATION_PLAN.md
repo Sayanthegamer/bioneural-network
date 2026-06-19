@@ -3,7 +3,7 @@
 ## Stage 1: Custom Autograd Kernels (The Foundation)
 **Objective:** Implement the mathematical primitives without triggering PyTorch's native graph memory blowouts or gradient failures.
 * **Task 1.1:** Build and verify `MNCAdderFunction` as a custom `torch.autograd.Function`. Implement the HTDR clipping for inputs and the $L_2$ surrogate gradient for the weights. (Completed: This **single-path** prototype is the verified baseline used for all Study 1–5 evaluations).
-* **Task 1.2 (Deferred / Ongoing):** Build `SmoothMinLSE` as a `torch.autograd.Function` and the parallel Chemical Bypass. This is deferred as a future research milestone since LSE gradient shapes could alter variance-gating dynamics.
+* **Task 1.2 (CANCELED):** Build `SmoothMinLSE` as a `torch.autograd.Function` and the parallel Chemical Bypass. Canceled due to the structural and computational limits of the L1 framework.
 
 ## Stage 2: The Core Network Module (Production Validation)
 **Objective:** Assemble the single-path primitive into a trainable layer and run comprehensive multi-seed validation.
@@ -25,7 +25,5 @@
   - The Transformer control baseline is tuned on its own terms (via LR and step sweeps). (Passed).
   - Report recall under both symmetric and asymmetric budgets, establishing immediate post-training Day 5 baselines to compute formal pass/fail ratios. (Completed).
 
-## Stage 5 (Future Research): Dual-Path Channel + Bypass
-**Objective:** Implement the dual-path LSE-smoothed model as a separate development branch.
-* **Task 5.1:** Implement `SmoothMinLSE` and a somatic integration path summing both the physical channel and chemical bypass.
-* **Task 5.2:** Re-run the comprehensive 10-seed validation sweep to check if the MESU vs SGD gap survives the smoothed gradient shape changes.
+## Stage 5 (CANCELED): Dual-Path Channel + Bypass
+* **Halted:** Further research into the dual-path LSE-smoothed model is canceled. The project is concluded, and no further development will take place.

@@ -1,6 +1,6 @@
-# 🧠 BioNeural Network — Metaplastic Neuro-Channel (MNC) Framework
+# 🧠 BioNeural Network — Metaplastic Neuro-Channel (MNC) Framework (A Negative Research Autopsy)
 
-> A **multiplication-free**, CPU-native neural architecture that solves catastrophic forgetting through biologically-inspired synaptic uncertainty and dual-timescale memory cascades.
+> **WARNING / POST-MORTEM:** This repository represents a completed negative research exploration of a "multiplication-free" neural architecture. While initially promising, rigorous mathematical and hardware-level stress testing has proven that the core design—specifically the L1 distance coordinate dispute, the one-way variance ratchet, and the embedding bottleneck—presents insurmountable limitations for scalable lifelong learning.
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 2.1+](https://img.shields.io/badge/pytorch-2.1+-ee4c2c.svg)](https://pytorch.org/)
@@ -69,48 +69,23 @@ A confidence-weighted restorative pull continuously nudges active parameters bac
 
 ---
 
-## 📊 Validated Results
+## 📊 Autopsy Results: The Bottleneck Shatters
 
-### Headline: 4/5 Facts Recalled After Interference (80%)
+When subjected to a realistic, **symmetric training protocol** (where new information and old information are trained with equal step budgets), the architecture collapses, failing to achieve stable continual learning.
 
-The MNC was trained sequentially on 5 facts, then subjected to 4 interfering distractors (including semantically adversarial ones like "guest wifi code 9912" designed to overwrite "server code 7734"). On Day 10, queried with **paraphrased questions never seen during training**:
-
+### Symmetric Recall Test Result (run_recall_test.py):
 ```
-Day 10 Recall (CrossEntropyLoss + Autocalibration):
+Day 10 Recall (Symmetric CrossEntropyLoss + Autocalibration):
   Q: Where is the blue folder kept?         → Expected 0, got 0 → CORRECT ✓
-  Q: What's the main server's access code?   → Expected 1, got 0 → WRONG   ✗
-  Q: When was Sarah's meeting rescheduled?   → Expected 2, got 2 → CORRECT ✓
+  Q: What's the main server's access code?   → Expected 1, got 7 → WRONG   ✗
+  Q: When was Sarah's meeting rescheduled?   → Expected 2, got 7 → WRONG   ✗
   Q: What fuel does the backup generator use? → Expected 3, got 3 → CORRECT ✓
   Q: When is Sector 4 camera maintenance?    → Expected 4, got 4 → CORRECT ✓
 
-RESULT: 4/5 correct (80%) — PASS
+RESULT: 3/5 correct (60%) — FAIL
 ```
 
-The single failure (Fact 1: "server code 7734") was displaced by the semantically nearest interference sentence ("guest wifi code 9912"), which shares identical sentence structure and topic domain.
-
-### 10-Seed Comprehensive Validation (Margin Loss)
-
-All multi-seed results below use the validated margin contrastive loss in `run_comprehensive_validation.py`:
-
-#### Study 1 — MESU vs SGD Baseline
-
-| Method | Mean Recall | Std | Range | Notes |
-|:---|:---:|:---:|:---:|:---|
-| **MESU (negative conductance)** | **3.10 – 4.40** | — | — | Facts survive interference |
-| SGD (lr=1.0) | 0.10 | — | — | Total catastrophic collapse |
-| SGD (lr=0.1) | 0.70 | — | — | Near-complete collapse |
-| SGD (lr=0.01) | 0.20 | — | — | Collapse at all learning rates |
-
-> SGD collapses at *every* learning rate tested. MESU retains 3–4 out of 5 facts.
-
-#### Study 5 — vs Tuned Transformer (5.2M parameters)
-
-| Model | Trainable Params | Mean Recall | Notes |
-|:---|:---:|:---:|:---|
-| **MNC (MESU)** | **~12.6K** | **3.40** | Zero matrix multiplications |
-| Decoder Transformer (tuned) | ~5.2M | 3.20 | Auto-tuned LR and steps via grid search |
-
-> The MNC matches or exceeds a Transformer with **413× fewer trainable parameters** and zero matrix multiplications. The Transformer baseline uses AdamW with auto-tuned hyperparameters (LR sweep over `[1e-4, 5e-4, 1e-3, 3e-3]`, step sweep over `[15, 30, 50]`).
+The system fails because MESU operates as a **one-way variance ratchet** ($\sigma^2 \to 0$), freezing parameter values rather than unfreezing them dynamically based on semantic relation. Additionally, the $L_1$ distance operator acts as an absolute coordinate template, turning spatial parameter updates into a zero-sum territorial dispute that actively prevents forward knowledge transfer.
 
 ---
 

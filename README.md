@@ -72,33 +72,32 @@ Traditional mitigations all have costs:
 
 All of these assume access to historical data or expensive second-order statistics. None work for truly online, single-pass, on-device learning.
 
-## 💡 The Solution
+## 💡 The Hypothesized Solution & Why It Failed
 
-The MNC framework takes a fundamentally different approach. Instead of protecting knowledge *externally* (replay, distillation), it builds protection *into the parameter update rule itself* through three innovations:
+The MNC framework hypothesized that instead of protecting knowledge *externally* (replay, distillation), it could build protection *into the parameter update rule itself* through three innovations. 
 
-### 1. Multiplication-Free Distance Operators
-The standard neuron `y = Wx + b` is replaced with `y = -|X - W|₁ + b`. Input-template similarity is measured by spatial proximity (Manhattan distance) rather than angular correlation (dot product). This eliminates all matrix multiplications from the forward pass.
+Here is the breakdown of the hypothesized mechanics and why they mathematically failed during stress testing:
 
-### 2. Metaplasticity from Synaptic Uncertainty (MESU)
-Every parameter tracks two quantities: its **value** (μ) and its **confidence** (σ²). New parameters have high variance (uncertain) and update aggressively. Well-learned parameters have low variance (confident) and resist change. This is the "learning rate governor" — the network automatically decides *which weights are safe to modify*.
+### 1. Multiplication-Free Distance Operators (Falsified)
+* **Hypothesis:** Replace standard dot-product neurons with `y = -|X - W|₁ + b`. Measuring similarity via spatial proximity (Manhattan distance) eliminates matrix multiplications.
+* **Why it Failed:** Processing continuous semantic inputs still requires generating the embedding $X$ first, which relies on a standard, multiplication-heavy 22M parameter Transformer. Bypassing the Transformer turns the MNC into a simple signal matcher, which is slower and less accurate than classical LSH or Bloom filters. Additionally, L1 distance coordinates turn updates into a zero-sum territorial dispute, preventing feature reuse (no forward transfer).
 
-### 3. Dual-Timescale Memory Cascades
-Two internal reservoirs track each parameter at different speeds:
-- **u₁ (fast cascade):** Tracks the active parameter, responding quickly to new data
-- **u₂ (slow cascade):** Consolidates from u₁, acting as a long-term memory anchor
+### 2. Metaplasticity from Synaptic Uncertainty (MESU) (Falsified)
+* **Hypothesis:** Track parameter values ($\mu$) and confidence ($\sigma^2$) to act as a dynamic, uncertainty-scaled learning rate governor.
+* **Why it Failed:** The update equations act as a one-way subtractive ratchet. Under gradient flow, variance only shrinks, permanently freezing weights. There is no mechanism to unfreeze variances based on new evidence, causing catastrophic remembering.
 
-A confidence-weighted restorative pull continuously nudges active parameters back toward u₂, preventing long-term drift without freezing the network.
+### 3. Dual-Timescale Memory Cascades (Falsified)
+* **Hypothesis:** Couple fast-timescale reservoirs ($u_1$) and slow long-term anchors ($u_2$) to prevent parameter drift.
+* **Why it Failed:** The extra tracking variables quadruple the parameter memory footprint. This $O(P)$ VRAM premium is far less efficient than a simple, bounded Experience Replay Buffer that achieves mathematically superior recall with $O(1)$ memory.
 
-### Key Innovations at a Glance
+### Hypothesized Mechanics at a Glance
 
-| Feature | Description |
-|:---|:---|
-| **Multiplication-Free Forward Pass** | Computes negative L1 (Manhattan) distance instead of dot products. Zero `matmul` operations. |
-| **Surrogate Gradient Routing** | Custom `torch.autograd.Function` with L₂ surrogate for weights and HardTanh clamping for inputs — prevents dead gradients from absolute value operations. |
-| **MESU Memory Engine** | Per-parameter Bayesian uncertainty tracking. Confident parameters resist change, uncertain parameters learn freely. |
-| **Dual-Timescale Cascades** | Fast/slow reservoir coupling bounds long-term parameter drift (measured: 2.65 vs 4.56 Euclidean drift). |
-| **Distance Autocalibration** | Shift/scale constants derived analytically from random unit-sphere distance distributions — zero manual tuning. |
-| **Unit Sphere Projection** | Weight templates are projected onto the unit hypersphere after every update, preventing gradient explosion and ensuring bounded distance ranges. |
+| Feature | Intended Concept | Autopsy Verdict / Failure Mode |
+|:---|:---|:---|
+| **Multiplication-Free Pass** | Computes negative L1 distance instead of dot products. | **Falsified:** Embedding extraction requires standard multiplication-heavy Transformers; L1 metrics cause zero-sum coordinate conflicts. |
+| **Surrogate Gradient Routing** | Custom autograd with L₂ weight surrogate and HardTanh input clamping. | **Falsified:** Piecewise-linear L1 manifolds create jagged gradients and dead zones, causing actuator twitch in control loops. |
+| **MESU Memory Engine** | Per-parameter Bayesian uncertainty scaling. | **Falsified:** Update rules function as a one-way variance ratchet ($\sigma^2 \to 0$), causing rigid lockup. |
+| **Dual-Timescale Cascades** | Fast/slow reservoir coupling bounds parameter drift. | **Falsified:** Tracking four states per weight quadruples memory; a 1.2GB replay buffer offers better recall at lower VRAM cost. |
 
 ---
 

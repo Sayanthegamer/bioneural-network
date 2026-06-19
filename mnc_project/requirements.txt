@@ -1,0 +1,17 @@
+# Metaplastic Neuro-Channel (MNC) Dependencies
+
+# Core Deep Learning Engine
+torch>=2.1.0
+
+# Custom Kernel Compilation (Essential for bypassing Python overhead)
+triton>=2.1.0; sys_platform == 'linux'
+# Note: For Windows/Mac, custom PyTorch C++ extensions via pybind11 will be used
+
+# Feature Extraction (Local, frozen embeddings)
+sentence-transformers>=2.2.2
+
+# Telemetry and Profiling
+psutil>=5.9.0
+
+# Standard Math/Data
+numpy>=1.24.0

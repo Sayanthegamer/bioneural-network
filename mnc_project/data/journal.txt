@@ -1,0 +1,14 @@
+# DAYS 1-5: CONSOLIDATED CONTEXT (Target Facts)
+The blue folder is in the third drawer.
+The access code for the main server is 7734.
+Sarah's strategy meeting was moved to Tuesday at 3 PM.
+The backup generator requires unleaded fuel.
+Sector 4 security cameras undergo maintenance at midnight.
+
+# DAYS 6-9: INTERFERING CONTEXT (Distractions / Noise)
+The red folder is resting on the top desk.
+Someone left a coffee mug in the breakroom.
+The access code for the guest wifi is 9912.
+It is raining heavily outside today.
+Sarah's lunch order was delivered to the wrong floor.
+Sector 2 cameras are fully operational.

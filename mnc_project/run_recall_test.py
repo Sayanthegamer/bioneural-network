@@ -1,12 +1,58 @@
 """
-MNC v3: The Bottleneck (Shared Representation Test)
-Forces 384-dimensional inputs through a 16-node shared hidden layer 
+MNC v4: The Bottleneck (Shared Representation Test)
+Forces 384-dimensional inputs through a 32-node shared hidden layer 
 before routing to the 10 final templates. Tests true Catastrophic Forgetting resistance.
+
+Uses CrossEntropyLoss instead of margin losses. CrossEntropyLoss has a critical
+property for bottleneck architectures: its logit gradients always sum to exactly
+zero (sum of p_j - y_j = 0). This means the shared Layer 0 receives perfectly
+balanced forces — no net destructive push that collapses the bottleneck.
 """
 import torch
+import torch.nn as nn
+import numpy as np
+import random
 from mnc.layers import MNCLinear
 from mnc.memory import MESUEngine
 from pipeline import JournalPipeline
+
+# =====================================================================
+# AUTOCALIBRATION (matches run_comprehensive_validation.py)
+# =====================================================================
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+class ScaleDistances(nn.Module):
+    def __init__(self, shift, scale):
+        super().__init__()
+        self.shift = shift
+        self.scale = scale
+    def forward(self, x):
+        return (x + self.shift) / self.scale
+
+def autocalibrate_scale_distances(in_features, num_samples=1000):
+    """Analytically derives scaling shifts and denominators from random sphere distance distribution."""
+    set_seed(42)  # Fixed seed for calibration stability
+    x = torch.randn(num_samples, in_features)
+    x = x / (x.norm(p=2, dim=1, keepdim=True) + 1e-8)
+    w = torch.randn(num_samples, in_features)
+    w = w / (w.norm(p=2, dim=1, keepdim=True) + 1e-8)
+    neg_l1 = -torch.norm(x - w, p=1, dim=1)
+    mean_val = neg_l1.mean().item()
+    std_val = neg_l1.std().item()
+    shift = -mean_val
+    scale = 2.0 * std_val if std_val > 1e-5 else 1.0
+    return shift, scale
+
+# Run autocalibration globally once
+SHIFT0, SCALE0 = autocalibrate_scale_distances(384)
+SHIFT1, SCALE1 = autocalibrate_scale_distances(32)
 
 FACTS = [
     {"statement": "The blue folder is in the third drawer.", "query": "Where is the blue folder kept?", "answer": "third drawer", "label": 0},
@@ -31,40 +77,37 @@ for idx, text in enumerate(INTERFERENCE):
     JOURNAL_LINES.append({"text": text, "label": 5 + idx})
 
 def run_evaluation():
-    print("--- MNC v3 (Shared Bottleneck) Delayed-Recall Test ---")
+    print("--- MNC v4 (Shared Bottleneck + CrossEntropy) Delayed-Recall Test ---")
     print("[!] Testing True Metaplastic Consolidation against Parameter Overlap")
+    print(f"[*] Autocalibrated: Layer0 shift={SHIFT0:.2f} scale={SCALE0:.2f} | Layer1 shift={SHIFT1:.2f} scale={SCALE1:.2f}")
     
     pipeline = JournalPipeline()
     
-    # Custom Lambda layer to safely scale distances before squashing
-    class ScaleDistances(torch.nn.Module):
-        def __init__(self, shift, scale):
-            super().__init__()
-            self.shift = shift
-            self.scale = scale
-        def forward(self, x):
-            return (x + self.shift) / self.scale
-            
-    # 1. The Bottleneck Architecture (32 hidden nodes = Shared Representation)
-    mnc_model = torch.nn.Sequential(
+    # The Bottleneck Architecture (32 hidden nodes = Shared Representation)
+    # Uses autocalibrated ScaleDistances instead of hardcoded constants
+    mnc_model = nn.Sequential(
         MNCLinear(384, 32),
-        ScaleDistances(22.0, 2.0),
-        torch.nn.Tanh(),
+        ScaleDistances(SHIFT0, SCALE0),
+        nn.Tanh(),
         MNCLinear(32, 10),
-        ScaleDistances(6.4, 1.0)
+        ScaleDistances(SHIFT1, SCALE1)
     )
     
     # Engine calibrated for fierce competition
     engine = MESUEngine(mnc_model, lr=1.0, sigma_prior=0.1, alpha_decay=0.02)
-    loss_fn = torch.nn.CrossEntropyLoss()
+    
+    # CrossEntropyLoss: gradients on logits sum to zero (∑(p_j - y_j) = 0)
+    # This means the shared bottleneck layer gets balanced forces — no net destruction
+    loss_fn = nn.CrossEntropyLoss()
 
-    print("\n[*] Online training over 9 lines (5 facts + 4 interference)")
+    print(f"\n[*] Online training over {len(JOURNAL_LINES)} lines (5 facts + 4 interference)")
     mnc_model.train()
     
     for i, item in enumerate(JOURNAL_LINES):
         text = item["text"]
         label = item["label"]
         vec = pipeline.embed_sentence(text)
+        target = torch.tensor([label])
         
         # Train for multiple steps: 15 steps for facts (labels < 5), 3 steps for interference (labels >= 5)
         num_steps = 15 if label < 5 else 3
@@ -76,17 +119,8 @@ def run_evaluation():
             # Forward pass (computes distances through bottleneck)
             logits = mnc_model(noisy_vec)
             
-            # DECOUPLED BOUNDARY LOSS
-            margin_wrong = 1.0
-            margin_true = 0.2
-            
-            # 1. Target Pull: Pull the correct class to an absolute safe zone (e.g., >= -0.2)
-            loss = torch.clamp(-logits[0, label] - margin_true, min=0.0)
-            
-            # 2. Intrusion Penalty: Push wrong classes away ONLY if they cross the absolute margin
-            for idx_class in range(10):
-                if idx_class != label:
-                    loss += torch.clamp(logits[0, idx_class] + margin_wrong, min=0.0)
+            # CrossEntropyLoss — zero-sum gradients protect the shared bottleneck
+            loss = loss_fn(logits, target)
             print(f"  Step {step_idx+1}: loss={loss.item():.4f}")
             
             # Backprop & MESU Update

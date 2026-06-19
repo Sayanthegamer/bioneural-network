@@ -78,17 +78,11 @@ def run_experiment(seed, mode, pipeline):
             
             logits = mnc_model(noisy_vec)
             
-            # DECOUPLED BOUNDARY LOSS
-            margin_wrong = 1.0
-            margin_true = 0.2
-            
-            # 1. Target Pull: Pull the correct class to an absolute safe zone
-            loss = torch.clamp(-logits[0, label] - margin_true, min=0.0)
-            
-            # 2. Intrusion Penalty: Push wrong classes away ONLY if they cross the absolute margin
+            margin = 1.0
+            loss = 0.0
             for idx_class in range(10):
                 if idx_class != label:
-                    loss += torch.clamp(logits[0, idx_class] + margin_wrong, min=0.0)
+                    loss += torch.clamp(logits[0, idx_class] - logits[0, label] + margin, min=0.0)
             
             loss.backward()
             

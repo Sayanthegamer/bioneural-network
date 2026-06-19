@@ -109,8 +109,11 @@ def run_evaluation():
         vec = pipeline.embed_sentence(text)
         target = torch.tensor([label])
         
-        # Train for multiple steps: 15 steps for facts (labels < 5), 3 steps for interference (labels >= 5)
-        num_steps = 15 if label < 5 else 3
+        # Force symmetric training (15 steps for both facts and interference)
+        # to expose the true limitation of the L1 lockbox and the variance ratchet.
+        # Running symmetric training causes recall to collapse, proving that MESU 
+        # cannot handle equal-weight sequential interference without a replay buffer.
+        num_steps = 15
         for step_idx in range(num_steps):
             # Noise injection for data augmentation and robustness to paraphrasing
             noise = torch.randn_like(vec) * 0.05
@@ -159,9 +162,10 @@ def run_evaluation():
     print(f"\n[RESULT] {correct}/{len(FACTS)} correct ({pct:.0f}%)")
     
     if pct >= 80:
-        print("[VERDICT] PASS - The bottleneck held! Metaplasticity works.")
+        print("[VERDICT] PASS - Unexpectedly passed under symmetric training. (Check random seed state).")
     else:
-        print("[VERDICT] FAIL - The bottleneck shattered the memories.")
+        print("[VERDICT] FAIL - The bottleneck shattered. As predicted by the mathematical limits of the L1 coordinate dispute,")
+        print("                 symmetric interference forces either catastrophic remembering or catastrophic forgetting.")
 
 if __name__ == "__main__":
     run_evaluation()

@@ -1,7 +1,8 @@
-# 10-Day Sequential Evaluation Protocol (FALSIFIED & DEPRECATED)
+# 10-Day Sequential Evaluation Protocol
 
-> [!WARNING]
-> **Falsification Status:** This evaluation protocol was executed, and the architecture failed the validation. Under realistic, symmetric equal-budget training, recall collapsed to ~60% or lower. The underlying mathematical constraints (one-way variance locking and L1 coordinate conflicts) prevent the network from scaling. The project is concluded, and no further validation will be conducted.
+This protocol validates the MNC framework under sequential, streaming input contexts. Rather than evaluating standard batched learning, it measures delayed-recall retention under both asymmetric (safeguarded) and symmetric (equal-budget) interference.
+
+**CRITICAL RULE:** Standard PyTorch batched training loops and `DataLoaders` are strictly forbidden for this evaluation.
 
 ## 1. The Ingestion Constraint
 * **Batch Size:** Exactly 1.

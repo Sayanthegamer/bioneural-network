@@ -1,7 +1,7 @@
-# Metaplastic Neuro-Channel (MNC) Framework v1.0 (DEPRECATED & FALSIFIED)
+# Metaplastic Neuro-Channel (MNC) Framework v1.0
+## Architectural Blueprint
 
-> [!WARNING]
-> **Falsification Status:** The architectural claims of the MNC framework have been mathematically and computationally falsified. The L1 distance operators prevent feature reuse, the MESU variance updates function as an irreversible locking ratchet (not a dynamic tension mechanism), and the embedding overhead completely nullifies any edge-compute benefits. This blueprint is retained solely as a historical record of the failure modes.
+The MNC is a research-grade neural architecture designed to investigate bounded continual learning on local hardware. It replaces standard dot-product cross-correlations with L1 distance metrics and utilizes synaptic uncertainty tracking (MESU) alongside dual-timescale cascades to prevent parameter drift.
 
 ### 1. The Core Philosophy
 The MNC is a hardware-native, multiplication-free neural architecture designed for lifelong, sequential learning on local consumer hardware. It discards standard cross-correlation (matrix multiplication) in favor of ALU-friendly flow-control operations, bypassing the computational bottlenecks of standard Transformers.

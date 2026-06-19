@@ -42,6 +42,13 @@ All six initial Phase 3/4 validation concerns have been resolved and evaluated i
 5. **Distance Scaling Autocalibration:** **Resolved** and integrated dynamically from random sphere distance distributions at initialization.
 6. **Rigorous Multi-Seed Validation:** **Resolved** by reporting statistics (mean, std, range) across a 10-seed sweep for all studies.
 
-### Project Deprecation & Halted Research:
+### Open Challenges & Research Caveats:
 
-All open focus areas and future research paths (including the dual-path LSE-smoothed model and hardware kernel compilation) have been **officially canceled**. Rigorous stress-testing confirmed that the L1 bottleneck, variance ratchet, and embedding compute overhead present insurmountable barriers to scaling, rendering further development non-viable.
+1. **The Kernel Mismatch (Production Baseline vs. Deferred Dual-Path):**
+   - **Status:** Current numbers use the single-path `MNCAdderFunction`. The dual-path Physical Channel + Chemical Bypass with LSE smoothing is deferred to examine if changing the gradient landscape alters MESU consolidation dynamics.
+2. **Dynamic/Information-Aware Prior Relaxation:**
+   - **Status:** The current `alpha_decay` unfreezing is time-based. Future work must investigate if prior relaxation can be gated dynamically by input novelty or semantic relevance.
+3. **VRAM Scaling & Replay Buffers:**
+   - **Status:** The MESU VRAM footprint is $O(P)$. Research is needed to compare this parameter memory premium directly against standard models running bounded Experience Replay buffers on equivalent VRAM footprints.
+4. **Symmetric Recall Performance:**
+   - **Status:** Under symmetric interference, recall degrades to ~60%. Resolving the L1 coordinate dispute in deep networks to allow forward transfer remains a major open bottleneck.

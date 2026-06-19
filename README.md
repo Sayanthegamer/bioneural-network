@@ -530,6 +530,10 @@ These are real limitations that anyone reproducing or building on this work shou
 
 6. **Single-Seed Transformer Tuning Variance.** The Transformer baseline's auto-tuning sweep is performed on Seed 0 only. The optimal hyperparameters found may not generalize equally across all seeds, contributing to variance in the Transformer's cross-seed scores.
 
+7. **The Capacity Wall:** A 12.6K parameter network violates information theory constraints for lifelong episodic storage. As the network saturates, it is mathematically forced into either catastrophic forgetting (relaxing priors) or catastrophic remembering (variance lockout).
+8. **The Discontinuous Gradient Trap:** L1 norms and HTDR clamping generate jagged, piecewise-linear manifolds. This prevents the smooth generative synthesis required for offline replay and causes pipeline stalls on modern MAC-optimized hardware.
+9. **The Generative Replay Paradox:** The architecture survives its bottleneck via lossy compression. Generating training data from these degraded centroids to fine-tune the Transformer during "sleep" replay will poison the Transformer's precision manifolds.
+
 ---
 
 ## 🗺️ Roadmap

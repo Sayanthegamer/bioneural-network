@@ -1,7 +1,8 @@
-# SYSTEM.md - Repository Rules and Context
+# SYSTEM.md - Repository Rules and Context (DEPRECATED & HALTED)
 
-## Project Definition
-This repository contains the Metaplastic Neuro-Channel (MNC) Framework. It is a research initiative building a multiplication-free, continual-learning neural network architecture. 
+> [!WARNING]
+> **Project Status: CANCELED & FALSIFIED.** 
+> Rigorous testing has proven this architecture's core claims to be invalid. The "multiplication-free" design requires a heavy 22M parameter transformer for embeddings (nullifying edge savings), the variance updates act as a one-way locking ratchet, and L1 coordinates prevent compositional feature reuse. The repository is preserved purely as a negative research autopsy. No active development or code changes should be made to continue this framework. 
 
 ## Immutable Coding Constraints (Read Carefully)
 If you are contributing to or editing this codebase, you MUST adhere to the following rules:

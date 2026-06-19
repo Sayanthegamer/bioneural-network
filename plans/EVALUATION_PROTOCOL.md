@@ -1,5 +1,7 @@
-# 10-Day Sequential Evaluation Protocol
-**CRITICAL RULE:** Standard PyTorch batched training loops and `DataLoaders` are strictly forbidden for this evaluation.
+# 10-Day Sequential Evaluation Protocol (FALSIFIED & DEPRECATED)
+
+> [!WARNING]
+> **Falsification Status:** This evaluation protocol was executed, and the architecture failed the validation. Under realistic, symmetric equal-budget training, recall collapsed to ~60% or lower. The underlying mathematical constraints (one-way variance locking and L1 coordinate conflicts) prevent the network from scaling. The project is concluded, and no further validation will be conducted.
 
 ## 1. The Ingestion Constraint
 * **Batch Size:** Exactly 1.

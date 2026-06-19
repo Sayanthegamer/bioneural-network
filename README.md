@@ -556,14 +556,6 @@ These are real limitations that anyone reproducing or building on this work shou
 - [x] Tuned Transformer baseline comparison — auto-tuned 5.2M param decoder
 - [x] Unit sphere weight projection — bounds template norms after every update
 
-### Future Research 🔬
-- [ ] **Dual-Path SmoothMinLSE + Chemical Bypass** — implement the LSE-smoothed physical channel and neurotransmitter bypass as a research branch, re-validate against the single-path baseline
-- [ ] **Triton/C++ kernel compilation** — compile custom autograd functions into native vectorized CPU/GPU instructions to eliminate Python interpreter overhead
-- [ ] **Scaling experiments** — test with 50+ facts, deeper semantic overlap between facts and interference
-- [ ] **Multi-layer deep MNC stacking** — explore 3+ layer architectures with multiple bottlenecks
-- [ ] **Real-world document streams** — validate on Wikipedia articles, conversation logs, and temporal knowledge bases
-- [ ] **Comparison with EWC and SI** — benchmark against Elastic Weight Consolidation and Synaptic Intelligence baselines
-
 ---
 
 ## 🧬 Biological Inspiration

@@ -10,9 +10,10 @@
 
 ## Table of Contents
 
+- [The Autopsy: What Killed the Project](#-the-autopsy-what-killed-the-project-why-we-stopped)
 - [The Problem](#-the-problem)
 - [The Solution](#-the-solution)
-- [Results](#-validated-results)
+- [Results](#-autopsy-results-the-bottleneck-shatters)
 - [Architecture Deep Dive](#-architecture-deep-dive)
 - [The Loss Function Discovery](#-the-loss-function-discovery)
 - [The 10-Day Protocol](#-the-10-day-delayed-recall-protocol)
@@ -21,6 +22,38 @@
 - [Quick Start](#-quick-start)
 - [Known Limitations](#%EF%B8%8F-known-limitations--honest-caveats)
 - [Roadmap](#%EF%B8%8F-roadmap)
+
+---
+
+## 💀 The Autopsy: What Killed the Project (Why We Stopped)
+
+Following rigorous mathematical and hardware stress-testing under symmetric training, this architecture has been determined to be a **dead end**. It has been formally deprecated. 
+
+Below is the autopsy of the structural and mathematical limits that killed the progress:
+
+### 1. The Embedding Bottleneck (The Compute Lie)
+The MNC claims to be a "multiplication-free" architecture designed to run on low-power edge CPUs. However, to compute semantic distances, the input data must first be converted into a dense, semantically aligned 384-dimensional vector. 
+* **The Reality:** We must run a 22-million parameter Transformer (`all-MiniLM-L6-v2`) executing billions of standard matrix multiplications on the CPU *before the data ever reaches the MNC module*. 
+* **The Verdict:** If you must fire up a deep neural network to embed every single incoming text packet, the gatekeeper is more computationally expensive than the gate itself. Bypassing the embedding model turns the MNC into a crude signal matcher, which is easily outclassed by standard, hyper-optimized classical algorithms like Locality Sensitive Hashing (LSH) or Isolation Forests.
+
+### 2. The Variance Ratchet vs. Dynamic Tension
+The optimizer was theoretically designed to dynamically unfreeze synaptic variance under persistent new evidence.
+* **The Reality:** The update equation for variance $\sigma^2$ is a one-way subtractive ratchet: `var.sub_(var * torch.clamp(raw_grad.abs() * 0.2, max=0.25))`. High gradients from a new, related task do not unfreeze the variance; they lock the synapses down faster. The only mechanism that increases variance is a time-decay scalar (`alpha_decay`) completely blind to incoming data. 
+* **The Verdict:** The system is an algorithmic lockbox that cannot dynamically adapt to new contexts without risking immediate catastrophic forgetting or absolute structural lock.
+
+### 3. Zero-Sum Spatial Templates (No Forward Transfer)
+To achieve general intelligence, a network must reuse features (Forward Transfer)—e.g., using a learned "circle" template to help learn a "sphere."
+* **The Reality:** The MNC relies on L1 distances ($|X - W|$) which represent absolute spatial coordinates rather than multiplicative scaling. Moving a coordinate template closer to a new concept $B$ strictly increases its distance from the old concept $A$.
+* **The Verdict:** Parameter sharing is a zero-sum territorial dispute. The network cannot abstract or reuse features; it can only occupy space or abandon it.
+
+### 4. The VRAM / Parameter Trap
+To track memory without a replay buffer, the MESU engine tracks the parameter weight, variance, and dual-timescale cascades ($u_1$, $u_2$).
+* **The Reality:** This quadruples the memory footprint of every parameter. Scaled to a standard 100M parameter model, the optimizer state alone balloons to 3x the model size (400M params).
+* **The Verdict:** For that exact same VRAM budget, a standard model using a bounded **Experience Replay Buffer** (reservoir sampling) achieves mathematically superior recall with $O(1)$ scaling and zero parameter bloat.
+
+### 5. Jagged Manifolds & Twitched Actuators
+* **The Reality:** L1 distance operators and `HardTanh` gradient clamping produce a piecewise-linear manifold riddled with sharp corners and dead zones.
+* **The Verdict:** While viable for toy classification, this jagged landscape is physically incompatible with continuous control systems (like robotics), where discontinuous gradient jumps manifest as violent, destructive physical actuator twitch.
 
 ---
 

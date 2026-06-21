@@ -28,4 +28,21 @@
 ## Stage 5 (Future Research): Dual-Path Channel + Bypass
 **Objective:** Implement the dual-path LSE-smoothed model as a separate development branch.
 * **Task 5.1:** Implement `SmoothMinLSE` and a somatic integration path summing both the physical channel and chemical bypass.
-* **Task 5.2:** Re-run the comprehensive 10-seed validation sweep to check if the MESU vs SGD gap survives the smoothed gradient shape changes.
+* **Task 5.2:** Re-run the comprehensive 10-seed validation sweep to check if the MESU vs SGD gap survives the smoothed gradient shape changes.
+
+## Stage 6: Empirical Characterization & Stress-Testing Suite
+**Objective:** Map the physical and optimization limits of the MESU v1 optimizer.
+* **Task 6.1:** Implement u2 Cascade Ablation, Gradient Overlap, Multi-Decay Variance Telemetry, Drift Correlation, Capacity Wall Scaling, and Replay Comparison sweeps. (Completed).
+* **Task 6.2:** Sweep representational capacity (model width) to construct log-log scaling fits under $\text{Recall}(N) = A/N^\alpha$. (Completed: Confirmed that forgetting is interference-dominated since the decay exponent remains constant at $\alpha \approx 1.20$ regardless of network width scaling).
+* **Task 6.3:** Overhaul the physics identity-retrieval lab (`laboratory.py`) to correct Nearest Neighbor lookup logic and separate Geometry vs Success margins. (Completed).
+
+## Stage 7: Parametric Isolation Study
+**Objective:** Build a rigorous causal ladder separating representation geometry from continual learning optimization.
+* **Task 7.1:** Implement the `parametric_study.py` sweep tracking offline controls (`OfflineLinear` and `OfflineMLP`) alongside online baseline models. (Completed).
+* **Task 7.2:** Track and graph retention curves (Current vs. Probe recall) and generate concept density heatmaps. (Completed).
+
+## Stage 8: Post-Run Audits & Resolutions
+**Objective:** Investigate and resolve anomalies observed during parametric isolation.
+* **Task 8.1:** Diagnose and resolve the `OfflineMLP` generalization gap by regularizing outputs and optimizing training convergence (removing early stopping limits). (Completed: MLP recall resolved to $99.34\% \pm 0.12\%$).
+* **Task 8.2:** Audit `ReplayLinear` primacy bias (logit domination from early class updates). (Completed).
+* **Task 8.3:** Implement the Frozen Representation Test to isolate hidden representation drift from output template interference. (Completed: Proved that output template interference is the primary driver of catastrophic forgetting).

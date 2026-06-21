@@ -1,0 +1,58 @@
+======================================================================
+STUDY 1: BASELINE SWEEP (STANDARD PROTOCOL WITH AUTOCALIBRATION)
+======================================================================
+  mesu_negative   | Mean Recall: 2.90/5 | Recall Ratio (Day10/Day5): 104.33% | Range: [1, 4]
+  mesu_positive   | Mean Recall: 3.00/5 | Recall Ratio (Day10/Day5): 86.33% | Range: [2, 4]
+  sgd_1.0         | Mean Recall: 0.20/5 | Recall Ratio (Day10/Day5): 10.00% | Range: [0, 1]
+  sgd_0.1         | Mean Recall: 1.40/5 | Recall Ratio (Day10/Day5): 90.00% | Range: [0, 3]
+
+======================================================================
+STUDY 2: HARDENED INTERFERENCE TEST (SHARED OUTPUT LABELS)
+======================================================================
+  mesu_negative   | Fact Recall: 2.90/5 | Distractor Recall: 2.50/4 | Displaced Facts: 0.90
+  sgd_0.1         | Fact Recall: 1.30/5 | Distractor Recall: 0.60/4 | Displaced Facts: 0.30
+
+======================================================================
+STUDY 3: STEP BUDGET SYMMETRY ABLATION
+======================================================================
+  Optimizer: mesu_negative
+    Asymmetric (15/3)      | Mean Recall: 2.90/5 | Std: 0.83
+    Symmetric Short (5/5)  | Mean Recall: 2.20/5 | Std: 0.87
+    Symmetric Long (15/15) | Mean Recall: 2.30/5 | Std: 0.90
+  Optimizer: sgd_0.1
+    Asymmetric (15/3)      | Mean Recall: 1.40/5 | Std: 0.80
+    Symmetric Short (5/5)  | Mean Recall: 0.70/5 | Std: 0.64
+    Symmetric Long (15/15) | Mean Recall: 1.00/5 | Std: 1.00
+
+======================================================================
+STUDY 4: U2 CASCADE TELEMETRY & RESTORATIVE PULL ABLATION
+======================================================================
+  u2 restorative pull ENABLED:
+    Mean Recall Accuracy      : 2.90/5
+    Parameter Drift (W10-W5)  : 4.0280
+    Cascade Drift (u2_10-W5)  : 5.2119
+    Total Weight Shift (W10-W0): 6.1872
+  u2 restorative pull DISABLED:
+    Mean Recall Accuracy      : 2.80/5
+    Parameter Drift (W10-W5)  : 4.0345
+    Cascade Drift (u2_10-W5)  : 5.5099
+    Total Weight Shift (W10-W0): 6.3973
+
+======================================================================
+STUDY 5: TRANSFORMER CONTROL COMPARISON
+======================================================================
+[*] Tuning Transformer control hyperparameters on Seed 0...
+  Selected optimal parameters: LR = 0.00010, Fact Steps = 15 (Seed 0 Tuning Score: 2/5)
+  Seed 0 Transformer: 2/5
+  Seed 1 Transformer: 4/5
+  Seed 2 Transformer: 3/5
+  Seed 3 Transformer: 3/5
+  Seed 4 Transformer: 3/5
+  Seed 5 Transformer: 4/5
+  Seed 6 Transformer: 3/5
+  Seed 7 Transformer: 4/5
+  Seed 8 Transformer: 3/5
+  Seed 9 Transformer: 3/5
+
+  Transformer Control Mean: 3.20/5 | Std: 0.60 | Range: [2, 4]
+  MNC (mesu_negative) Mean : 2.90/5 | Std: 0.83

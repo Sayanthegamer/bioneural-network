@@ -1,10 +1,10 @@
 ======================================================================
 STUDY 1: BASELINE SWEEP (STANDARD PROTOCOL WITH AUTOCALIBRATION)
 ======================================================================
-  mesu_negative   | Mean Recall: 2.90/5 | Recall Ratio (Day10/Day5): 104.33% | Range: [1, 4]
-  mesu_positive   | Mean Recall: 3.00/5 | Recall Ratio (Day10/Day5): 86.33% | Range: [2, 4]
-  sgd_1.0         | Mean Recall: 0.20/5 | Recall Ratio (Day10/Day5): 10.00% | Range: [0, 1]
-  sgd_0.1         | Mean Recall: 1.40/5 | Recall Ratio (Day10/Day5): 90.00% | Range: [0, 3]
+  mesu_negative   | Mean Recall: 2.90/5 (Day 5: 3.10/5) | Recall Ratio (Day10/Day5): 93.55% | Range: [1, 4]
+  mesu_positive   | Mean Recall: 3.00/5 (Day 5: 3.60/5) | Recall Ratio (Day10/Day5): 83.33% | Range: [2, 4]
+  sgd_1.0         | Mean Recall: 0.20/5 (Day 5: 1.50/5) | Recall Ratio (Day10/Day5): 13.33% | Range: [0, 1]
+  sgd_0.1         | Mean Recall: 1.40/5 (Day 5: 1.30/5) | Recall Ratio (Day10/Day5): 107.69% | Range: [0, 3]
 
 ======================================================================
 STUDY 2: HARDENED INTERFERENCE TEST (SHARED OUTPUT LABELS)

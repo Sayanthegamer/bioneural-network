@@ -310,18 +310,20 @@ if __name__ == "__main__":
     print("STUDY 1: BASELINE SWEEP (STANDARD PROTOCOL WITH AUTOCALIBRATION)")
     print("="*70)
     modes = ['mesu_negative', 'mesu_positive', 'sgd_1.0', 'sgd_0.1']
-    study1_results = {m: {"fc": [], "ratio": []} for m in modes}
+    study1_results = {m: {"fc": [], "day5": []} for m in modes}
     for seed in seeds:
         for m in modes:
             fc, _, _, _, day5_c = run_experiment_mnc(seed, m, pipeline, hardened=False)
             study1_results[m]["fc"].append(fc)
-            ratio = (100.0 * fc / day5_c) if day5_c > 0 else 0.0
-            study1_results[m]["ratio"].append(ratio)
+            study1_results[m]["day5"].append(day5_c)
 
     for m in modes:
         fcs = study1_results[m]["fc"]
-        ratios = study1_results[m]["ratio"]
-        print(f"  {m:<15} | Mean Recall: {np.mean(fcs):.2f}/5 | Recall Ratio (Day10/Day5): {np.mean(ratios):.2f}% | Range: [{np.min(fcs)}, {np.max(fcs)}]")
+        day5s = study1_results[m]["day5"]
+        mean_fc = np.mean(fcs)
+        mean_day5 = np.mean(day5s)
+        ratio_of_means = (100.0 * mean_fc / mean_day5) if mean_day5 > 0 else 0.0
+        print(f"  {m:<15} | Mean Recall: {mean_fc:.2f}/5 (Day 5: {mean_day5:.2f}/5) | Recall Ratio (Day10/Day5): {ratio_of_means:.2f}% | Range: [{np.min(fcs)}, {np.max(fcs)}]")
 
     # -----------------------------------------------------------------
     # STUDY 2: Hardened Interference Test (Shared Output Labels)

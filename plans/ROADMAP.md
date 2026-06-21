@@ -41,7 +41,7 @@ All initial Phase 3/4 validation concerns and the **8-part Empirical Characteriz
 4.  **u2 Cascade Restorative Pull Trajectory:** **Resolved** (Study 4 & `drift_analysis.py`), proving that $u_2$ acts as a stabilizer that halves parameter drift ($D_{\text{drift}} = 0.156$ vs. $0.243$ when disabled).
 5.  **Distance Scaling Autocalibration:** **Resolved** and analytically derived.
 6.  **Variance Telemetry Sweep:** **Resolved** (`variance_telemetry.py`), demonstrating tunable non-zero equilibria based on the decay rate $\alpha$.
-7.  **Replay Complementarity:** **Resolved** (`replay_comparison.py`), showing that combining MESU's metaplastic gating with experience replay reduces forgetting by **12.8x** (to 5.2%), proving they are complementary.
+7.  **Replay Complementarity:** **Resolved** (`replay_comparison.py`), showing that combining MESU's metaplastic gating with experience replay (size 10) reduces forgetting by **10.4x** (to 6.4%), and by **12.8x** (to 5.2%) with buffer size 50, proving they are complementary.
 8.  **Parametric Isolation Sweep (`parametric_study.py`)**: **Resolved**, validating 100% linear and 99.34% MLP offline separability (confirming representational geometry), while isolating catastrophic online learning failures ($7.88\%$ online linear, $0.16\%$ online MLP).
 9.  **Frozen Representation Test (Audit 3)**: **Resolved** (`check_frozen_rep.py`), demonstrating that output template interference is the primary driver of catastrophic forgetting.
 10. **Replay Primacy Bias**: **Resolved**, diagnosing the logit domination of early classes in sequential experience replay.

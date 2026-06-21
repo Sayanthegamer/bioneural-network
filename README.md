@@ -98,9 +98,9 @@ Results averaged across 10 random seeds to isolate continual learning variables:
 
 | Study | Focus | Empirical Result / Metrics |
 | :--- | :--- | :--- |
-| **1. Baselines** | [MESUEngine](file:///c:/Users/Anon/Downloads/Northstar/mnc_project/mnc/memory.py) vs. SGD baseline | SGD collapses ($0.0 \to 0.7/5$ recall); MESU maintains $3.1 \to 4.4/5$ recall. |
+| **1. Baselines** | [MESUEngine](file:///c:/Users/Anon/Downloads/Northstar/mnc_project/mnc/memory.py) vs. SGD baseline | SGD collapses ($0.20 \to 1.40/5$ recall); MESU maintains $3.40/5$ recall. |
 | **2. Interference** | Shared-label distractors | MESU limits displaced target facts to $0.50$ (SGD collapses). |
-| **3. Budgets** | Step budget symmetry | Asymmetric (15/3): **3.10** mean; Symmetric (5/5): **2.70** mean; Symmetric (15/15): **1.80** mean. |
+| **3. Budgets** | Step budget symmetry | Asymmetric (15/3): **3.40** mean; Symmetric (5/5): **3.60** mean; Symmetric (15/15): **1.80** mean. |
 | **4. Telemetry** | $u_2$ cascade anchor | $u_2$ pull reduces parameter drift $D(u_2, W_5)$ by **42%** ($4.56 \to 2.65$). |
 | **5. Parameter Efficiency** | MNC vs. Transformer | 12.6K parameter MNC matches/exceeds 5.2M Transformer (3.40 vs. 3.20 recall). |
 

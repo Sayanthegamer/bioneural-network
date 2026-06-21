@@ -452,6 +452,25 @@ Refactored baseline Nearest-Neighbor laboratory benchmark measuring stability un
 
 ---
 
+## 🧪 How & When to Run the Characterization Suite
+
+These empirical tests track boundary conditions and verify structural integrity. Use this guide to determine which script to run after making changes to the codebase:
+
+| Experiment Script | Command | Why Run This? (Purpose) | When to Run It? (Trigger) |
+| :--- | :--- | :--- | :--- |
+| **Cascade Ablation**<br>`u2_ablation.py` | `python experiments/u2_ablation.py` | Measures how much the slow consolidation cascade ($u_2$) prevents active template drift. | Run when tuning cascade coupling constants, optimizer lr, or testing alternate weight anchoring attractors. |
+| **Gradient Overlap**<br>`parameter_overlap.py` | `python experiments/parameter_overlap.py` | Computes cosine similarity of sequential task updates to verify representational isolation. | Run if you modify the backward pass primitives (L2 weight surrogate or HTDR clamping ranges). |
+| **Variance Telemetry**<br>`variance_telemetry.py` | `python experiments/variance_telemetry.py` | Plots variance convergence rates across training, rest, and interference phases. | Run when tuning `alpha_decay` unfreezing rates, variance lock parameters, or rest duration. |
+| **Drift Correlation**<br>`drift_analysis.py` | `python experiments/drift_analysis.py` | Calculates Pearson correlation ($\rho$) between weight movement and fact forgetting rates. | Run when changing optimization dynamics to audit whether memory loss is caused by weight drift. |
+| **Capacity Wall**<br>`capacity_wall.py` | `python experiments/capacity_wall.py` | Identifies the power-law memory saturation wall when scaling sequential loading up to 800 facts. | Run to verify if a new gating optimization method or activation function breaks the $1/N$ decay ceiling. |
+| **Replay Comparison**<br>`replay_comparison.py` | `python experiments/replay_comparison.py` | Benchmarks SGD vs. MESU under a low replay budget across multiple buffer sizes. | Run if you implement custom experience replay sampling strategies or generative sleep replay. |
+| **Width-Scaling Sweep**<br>`width_scaling.py` | `python experiments/width_scaling.py` | Fits power-law scaling laws ($A/N^\alpha$) across varying sequence lengths and model widths. | Run when verifying if an architectural update alters the asymptotic interference decay rate. |
+| **Identity Retrieval Lab**<br>`laboratory.py` | `python experiments/laboratory.py` | Benchmarks KNN controls against single-pass and replay linear models under perturbation noise. | Run to test classification layer robustness, intra-concept error shifts, and confidence margins. |
+
+*Note: Run all commands from the `mnc_project` root directory.*
+
+---
+
 
 ## 📁 Project Structure
 

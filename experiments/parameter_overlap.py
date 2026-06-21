@@ -11,6 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
 
 from mnc.layers import MNCLinear
 from pipeline import JournalPipeline
+from mnc.memory import MESUEngine
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -75,7 +76,7 @@ def run_parameter_overlap(seed=42):
     set_seed(seed)
     pipeline = JournalPipeline()
     
-    # 1. Instantiate the model
+    # 1. Instantiate and train the model
     model = nn.Sequential(
         MNCLinear(384, 32),
         ScaleDistances(SHIFT0, SCALE0),
@@ -84,6 +85,22 @@ def run_parameter_overlap(seed=42):
         ScaleDistances(SHIFT1, SCALE1)
     )
     loss_fn = nn.CrossEntropyLoss()
+    engine = MESUEngine(model, lr=1.0, sigma_prior=0.1, alpha_decay=0.02)
+    
+    print("\n[*] Training model before gradient extraction...")
+    model.train()
+    for item in JOURNAL_LINES:
+        vec = pipeline.embed_sentence(item["text"])
+        target = torch.tensor([item["label"]])
+        for _ in range(15):
+            noise = torch.randn_like(vec) * 0.05
+            logits = model(vec + noise)
+            loss = loss_fn(logits, target)
+            loss.backward()
+            engine.step(loss.item())
+            engine.zero_grad()
+            
+    print("\n[*] Extracting gradients on the trained model...")
     
     # 2. Extract gradients for each individual item independently
     gradients_l0 = {}

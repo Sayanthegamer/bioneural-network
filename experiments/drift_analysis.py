@@ -126,7 +126,13 @@ def run_drift_analysis(seeds, csv_path):
             
             # Phase 2: Rest Phase
             for _ in range(30):
-                model.zero_grad()
+                # Ensure grads are zero tensors instead of None to allow relaxation step to run
+                for p in model.parameters():
+                    if p.grad is not None:
+                        p.grad.detach_()
+                        p.grad.zero_()
+                    else:
+                        p.grad = torch.zeros_like(p.data)
                 engine.step(current_loss=0.0)
                 
             # Phase 3: Interference Phase

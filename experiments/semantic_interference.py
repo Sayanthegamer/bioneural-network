@@ -93,8 +93,13 @@ def run_evaluation(seed, interference_type):
     # 2. Rest phase: 30 steps of zero-gradient relaxation (allows variance to recover)
     model.train()
     for _ in range(30):
-        # Pass dummy update step to trigger alpha_decay prior relaxation
-        model.zero_grad()
+        # Ensure grads are zero tensors instead of None to allow relaxation step to run
+        for p in model.parameters():
+            if p.grad is not None:
+                p.grad.detach_()
+                p.grad.zero_()
+            else:
+                p.grad = torch.zeros_like(p.data)
         engine.step(current_loss=0.0)
         
     # 3. Ingest Interference (15 steps)

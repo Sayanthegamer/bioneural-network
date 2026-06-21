@@ -121,7 +121,13 @@ def run_variance_telemetry_sweep(seed=42):
         # Phase 2: Rest Phase (30 steps of zero-gradient relaxation)
         for step_idx in range(30):
             global_step += 1
-            model.zero_grad()
+            # Ensure grads are zero tensors instead of None to allow relaxation step to run
+            for p in model.parameters():
+                if p.grad is not None:
+                    p.grad.detach_()
+                    p.grad.zero_()
+                else:
+                    p.grad = torch.zeros_like(p.data)
             engine.step(current_loss=0.0) # passes 0.0 to check decay recovery
             
             var_all = torch.cat([v.view(-1) for v in engine.variances.values()])

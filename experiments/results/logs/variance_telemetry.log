@@ -1,0 +1,26 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 5951.33it/s]
+
+[*] Running telemetry for alpha_decay = 0.001
+Finished alpha_decay = 0.001:
+  Final Mean Variance:   0.000831
+  Final Median Variance: 0.000513
+  Final Min Variance:    0.000100
+  Final Max Variance:    0.005691
+
+[*] Running telemetry for alpha_decay = 0.01
+Finished alpha_decay = 0.01:
+  Final Mean Variance:   0.004000
+  Final Median Variance: 0.003595
+  Final Min Variance:    0.000388
+  Final Max Variance:    0.009771
+
+[*] Running telemetry for alpha_decay = 0.1
+Finished alpha_decay = 0.1:
+  Final Mean Variance:   0.008488
+  Final Median Variance: 0.008965
+  Final Min Variance:    0.003077
+  Final Max Variance:    0.009921
+
+[SUCCESS] Variance telemetry CSV saved to: C:\Users\Anon\Downloads\Northstar\experiments\results\variance_telemetry.csv

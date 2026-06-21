@@ -1,0 +1,80 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+====================================================
+  MESU vs SGD Experience Replay Benchmark
+====================================================
+
+[*] Evaluating: Method=SGD | Replay Buffer Size=0
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 4380.85it/s]
+  Seed  42 | Recall:   4.0% | Forgetting:  42.0% | Efficiency: 0.0400 | Drift: 4.9918
+  Seed 101 | Recall:   2.0% | Forgetting:  14.0% | Efficiency: 0.0200 | Drift: 5.0668
+  Seed 202 | Recall:   4.0% | Forgetting:  36.0% | Efficiency: 0.0400 | Drift: 5.1790
+  Seed 303 | Recall:   4.0% | Forgetting:  28.0% | Efficiency: 0.0400 | Drift: 4.9744
+  Seed 404 | Recall:   2.0% | Forgetting:  14.0% | Efficiency: 0.0200 | Drift: 5.0701
+
+[*] Evaluating: Method=SGD | Replay Buffer Size=10
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 4249.38it/s]
+  Seed  42 | Recall:   2.0% | Forgetting:  12.0% | Efficiency: 0.0020 | Drift: 8.6495
+  Seed 101 | Recall:   2.0% | Forgetting:   8.0% | Efficiency: 0.0020 | Drift: 8.7042
+  Seed 202 | Recall:   2.0% | Forgetting:  20.0% | Efficiency: 0.0020 | Drift: 8.7198
+  Seed 303 | Recall:   2.0% | Forgetting:  10.0% | Efficiency: 0.0020 | Drift: 8.9200
+  Seed 404 | Recall:   2.0% | Forgetting:  16.0% | Efficiency: 0.0020 | Drift: 8.5403
+
+[*] Evaluating: Method=SGD | Replay Buffer Size=50
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 3122.23it/s]
+  Seed  42 | Recall:   2.0% | Forgetting:  22.0% | Efficiency: 0.0004 | Drift: 8.7577
+  Seed 101 | Recall:   2.0% | Forgetting:  18.0% | Efficiency: 0.0004 | Drift: 8.6905
+  Seed 202 | Recall:   2.0% | Forgetting:  26.0% | Efficiency: 0.0004 | Drift: 8.5615
+  Seed 303 | Recall:   2.0% | Forgetting:  20.0% | Efficiency: 0.0004 | Drift: 8.8656
+  Seed 404 | Recall:   2.0% | Forgetting:  26.0% | Efficiency: 0.0004 | Drift: 8.5443
+
+[*] Evaluating: Method=SGD | Replay Buffer Size=100
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 7967.64it/s]
+  Seed  42 | Recall:   2.0% | Forgetting:  22.0% | Efficiency: 0.0002 | Drift: 8.7577
+  Seed 101 | Recall:   2.0% | Forgetting:  18.0% | Efficiency: 0.0002 | Drift: 8.6905
+  Seed 202 | Recall:   2.0% | Forgetting:  26.0% | Efficiency: 0.0002 | Drift: 8.5615
+  Seed 303 | Recall:   2.0% | Forgetting:  20.0% | Efficiency: 0.0002 | Drift: 8.8656
+  Seed 404 | Recall:   2.0% | Forgetting:  26.0% | Efficiency: 0.0002 | Drift: 8.5443
+
+[*] Evaluating: Method=MESU | Replay Buffer Size=0
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 4743.75it/s]
+  Seed  42 | Recall:   4.0% | Forgetting:  60.0% | Efficiency: 0.0400 | Drift: 2.3935
+  Seed 101 | Recall:   2.0% | Forgetting:  62.0% | Efficiency: 0.0200 | Drift: 2.4557
+  Seed 202 | Recall:   2.0% | Forgetting:  74.0% | Efficiency: 0.0200 | Drift: 2.3557
+  Seed 303 | Recall:   4.0% | Forgetting:  72.0% | Efficiency: 0.0400 | Drift: 2.4324
+  Seed 404 | Recall:   4.0% | Forgetting:  66.0% | Efficiency: 0.0400 | Drift: 2.3772
+
+[*] Evaluating: Method=MESU | Replay Buffer Size=10
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 3858.47it/s]
+  Seed  42 | Recall:   6.0% | Forgetting:   6.0% | Efficiency: 0.0060 | Drift: 2.9891
+  Seed 101 | Recall:   6.0% | Forgetting:   4.0% | Efficiency: 0.0060 | Drift: 2.7780
+  Seed 202 | Recall:   2.0% | Forgetting:   8.0% | Efficiency: 0.0020 | Drift: 2.8323
+  Seed 303 | Recall:   2.0% | Forgetting:   8.0% | Efficiency: 0.0020 | Drift: 2.8590
+  Seed 404 | Recall:   4.0% | Forgetting:   6.0% | Efficiency: 0.0040 | Drift: 2.8712
+
+[*] Evaluating: Method=MESU | Replay Buffer Size=50
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 4240.33it/s]
+  Seed  42 | Recall:   0.0% | Forgetting:   6.0% | Efficiency: 0.0000 | Drift: 2.7383
+  Seed 101 | Recall:   4.0% | Forgetting:   6.0% | Efficiency: 0.0008 | Drift: 2.5135
+  Seed 202 | Recall:   2.0% | Forgetting:   6.0% | Efficiency: 0.0004 | Drift: 2.6529
+  Seed 303 | Recall:   2.0% | Forgetting:   4.0% | Efficiency: 0.0004 | Drift: 2.7716
+  Seed 404 | Recall:   4.0% | Forgetting:   4.0% | Efficiency: 0.0008 | Drift: 2.9222
+
+====================================================
+  MESU vs SGD Experience Replay Summary Table
+====================================================
+Method | Buffer | Recall (Mean +/- Std)     | Forgetting (Mean +/- Std) | Efficiency (Mean +/- Std)
+---------------------------------------------------------------------------------------------------------
+SGD    | 0      |  3.20% +/-  0.98% | 26.80% +/- 11.36% | 0.0320 +/- 0.0098
+SGD    | 10     |  2.00% +/-  0.00% | 13.20% +/-  4.31% | 0.0020 +/- 0.0000
+SGD    | 50     |  2.00% +/-  0.00% | 22.40% +/-  3.20% | 0.0004 +/- 0.0000
+SGD    | 100    |  2.00% +/-  0.00% | 22.40% +/-  3.20% | 0.0002 +/- 0.0000
+MESU   | 0      |  3.20% +/-  0.98% | 66.80% +/-  5.46% | 0.0320 +/- 0.0098
+MESU   | 10     |  4.00% +/-  1.79% |  6.40% +/-  1.50% | 0.0040 +/- 0.0018
+MESU   | 50     |  2.40% +/-  1.50% |  5.20% +/-  0.98% | 0.0005 +/- 0.0003

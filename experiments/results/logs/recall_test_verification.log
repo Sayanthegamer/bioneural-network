@@ -1,0 +1,186 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+--- MNC v4 (Shared Bottleneck + CrossEntropy) Delayed-Recall Test ---
+[!] Testing True Metaplastic Consolidation against Parameter Overlap
+[*] Autocalibrated: Layer0 shift=22.09 scale=1.22 | Layer1 shift=6.39 scale=1.31
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 7993.44it/s]
+
+[*] Online training over 9 lines (5 facts + 4 interference)
+  Step 1: loss=2.8233
+    Step 1 gradients: 0.W=0.000005, 3.W=0.142820
+  Step 2: loss=1.9002
+  Step 3: loss=1.2481
+  Step 4: loss=0.9127
+  Step 5: loss=0.6066
+  Step 6: loss=0.5047
+  Step 7: loss=0.4118
+  Step 8: loss=0.3485
+  Step 9: loss=0.3171
+  Step 10: loss=0.2076
+  Step 11: loss=0.1981
+  Step 12: loss=0.1909
+  Step 13: loss=0.1859
+  Step 14: loss=0.1819
+  Step 15: loss=0.1792
+    Step 15 gradients: 0.W=0.000006, 3.W=0.023565
+Day 1: 'The blue folder is in the third drawer. ' | label=0 pred=0 loss=0.1792 | var_0=0.007524 var_2=0.004076
+  Step 1: loss=2.1933
+    Step 1 gradients: 0.W=0.000040, 3.W=0.131901
+  Step 2: loss=2.0324
+  Step 3: loss=1.8974
+  Step 4: loss=1.8034
+  Step 5: loss=1.6637
+  Step 6: loss=1.5171
+  Step 7: loss=1.3802
+  Step 8: loss=1.1537
+  Step 9: loss=1.0614
+  Step 10: loss=1.0098
+  Step 11: loss=0.9611
+  Step 12: loss=0.9169
+  Step 13: loss=0.8151
+  Step 14: loss=0.8414
+  Step 15: loss=0.8203
+    Step 15 gradients: 0.W=0.000084, 3.W=0.076601
+Day 2: 'The access code for the main server is 7' | label=1 pred=1 loss=0.8203 | var_0=0.006445 var_2=0.003124
+  Step 1: loss=2.6056
+    Step 1 gradients: 0.W=0.000049, 3.W=0.139661
+  Step 2: loss=2.1805
+  Step 3: loss=1.8468
+  Step 4: loss=1.6421
+  Step 5: loss=1.5458
+  Step 6: loss=1.4615
+  Step 7: loss=1.3863
+  Step 8: loss=1.1449
+  Step 9: loss=1.1050
+  Step 10: loss=1.0516
+  Step 11: loss=1.0028
+  Step 12: loss=0.7655
+  Step 13: loss=0.7339
+  Step 14: loss=0.6996
+  Step 15: loss=0.6745
+    Step 15 gradients: 0.W=0.000034, 3.W=0.071511
+Day 3: 'Sarah's strategy meeting was moved to Tu' | label=2 pred=2 loss=0.6745 | var_0=0.005491 var_2=0.002816
+  Step 1: loss=3.0642
+    Step 1 gradients: 0.W=0.000008, 3.W=0.146128
+  Step 2: loss=2.8210
+  Step 3: loss=2.3637
+  Step 4: loss=2.2048
+  Step 5: loss=2.0277
+  Step 6: loss=1.6186
+  Step 7: loss=1.3029
+  Step 8: loss=1.2343
+  Step 9: loss=1.1405
+  Step 10: loss=0.9949
+  Step 11: loss=0.9499
+  Step 12: loss=0.9104
+  Step 13: loss=0.8754
+  Step 14: loss=0.8445
+  Step 15: loss=0.7909
+    Step 15 gradients: 0.W=0.000120, 3.W=0.077324
+Day 4: 'The backup generator requires unleaded f' | label=3 pred=3 loss=0.7909 | var_0=0.005178 var_2=0.002602
+  Step 1: loss=3.0110
+    Step 1 gradients: 0.W=0.000018, 3.W=0.145900
+  Step 2: loss=2.8060
+  Step 3: loss=2.6377
+  Step 4: loss=2.1245
+  Step 5: loss=2.0100
+  Step 6: loss=1.9113
+  Step 7: loss=1.4279
+  Step 8: loss=1.3585
+  Step 9: loss=1.0361
+  Step 10: loss=0.9983
+  Step 11: loss=0.9339
+  Step 12: loss=0.8452
+  Step 13: loss=0.8793
+  Step 14: loss=0.8443
+  Step 15: loss=0.8122
+    Step 15 gradients: 0.W=0.000047, 3.W=0.082318
+Day 5: 'Sector 4 security cameras undergo mainte' | label=4 pred=4 loss=0.8122 | var_0=0.005151 var_2=0.002503
+  Step 1: loss=2.9188
+    Step 1 gradients: 0.W=0.000099, 3.W=0.144216
+  Step 2: loss=2.7456
+  Step 3: loss=2.3674
+  Step 4: loss=2.0457
+  Step 5: loss=1.9416
+  Step 6: loss=1.8495
+  Step 7: loss=1.7683
+  Step 8: loss=1.6929
+  Step 9: loss=1.6825
+  Step 10: loss=1.5680
+  Step 11: loss=1.4792
+  Step 12: loss=1.4070
+  Step 13: loss=1.3945
+  Step 14: loss=1.3524
+  Step 15: loss=1.1508
+    Step 15 gradients: 0.W=0.000107, 3.W=0.098921
+Day 6: 'The red folder is resting on the top des' | label=5 pred=3 loss=1.1508 | var_0=0.005281 var_2=0.002538
+  Step 1: loss=3.2294
+    Step 1 gradients: 0.W=0.000016, 3.W=0.148812
+  Step 2: loss=2.9920
+  Step 3: loss=2.7991
+  Step 4: loss=2.6401
+  Step 5: loss=2.5072
+  Step 6: loss=2.3934
+  Step 7: loss=1.9697
+  Step 8: loss=2.2098
+  Step 9: loss=1.9245
+  Step 10: loss=1.5092
+  Step 11: loss=1.4497
+  Step 12: loss=1.6059
+  Step 13: loss=1.3443
+  Step 14: loss=1.2972
+  Step 15: loss=1.2526
+    Step 15 gradients: 0.W=0.000081, 3.W=0.106234
+Day 7: 'Someone left a coffee mug in the breakro' | label=6 pred=0 loss=1.2526 | var_0=0.005956 var_2=0.002556
+  Step 1: loss=4.0176
+    Step 1 gradients: 0.W=0.000051, 3.W=0.154248
+  Step 2: loss=3.5841
+  Step 3: loss=2.7908
+  Step 4: loss=2.6003
+  Step 5: loss=2.3512
+  Step 6: loss=1.6782
+  Step 7: loss=1.5630
+  Step 8: loss=1.4710
+  Step 9: loss=1.3005
+  Step 10: loss=1.1854
+  Step 11: loss=1.1368
+  Step 12: loss=0.7672
+  Step 13: loss=0.5410
+  Step 14: loss=0.5261
+  Step 15: loss=0.4719
+    Step 15 gradients: 0.W=0.000099, 3.W=0.053295
+Day 8: 'The access code for the guest wifi is 99' | label=7 pred=7 loss=0.4719 | var_0=0.005403 var_2=0.002189
+  Step 1: loss=3.1376
+    Step 1 gradients: 0.W=0.000005, 3.W=0.149017
+  Step 2: loss=2.9125
+  Step 3: loss=2.7288
+  Step 4: loss=2.5762
+  Step 5: loss=2.3569
+  Step 6: loss=1.6927
+  Step 7: loss=1.4757
+  Step 8: loss=1.4016
+  Step 9: loss=1.3358
+  Step 10: loss=1.0596
+  Step 11: loss=1.0131
+  Step 12: loss=0.9708
+  Step 13: loss=0.8966
+  Step 14: loss=0.8691
+  Step 15: loss=0.8543
+    Step 15 gradients: 0.W=0.000170, 3.W=0.080871
+Day 9: 'It is raining heavily outside today.    ' | label=8 pred=8 loss=0.8543 | var_0=0.005024 var_2=0.002202
+
+[*] Day 10 - querying with PARAPHRASED questions (not seen verbatim in training)
+  Q: Where is the blue folder kept?
+     Expected 0, got 0 -> CORRECT
+  Q: What's the main server's access code?
+     Expected 1, got 7 -> WRONG
+  Q: When did Sarah's strategy meeting get rescheduled to?
+     Expected 2, got 7 -> WRONG
+  Q: What kind of fuel does the backup generator need?
+     Expected 3, got 3 -> CORRECT
+  Q: When does Sector 4 camera maintenance happen?
+     Expected 4, got 4 -> CORRECT
+
+[RESULT] 3/5 correct (60%)
+[VERDICT] FAIL - The bottleneck shattered. As predicted by the mathematical limits of the L1 coordinate dispute,
+                 symmetric interference forces either catastrophic remembering or catastrophic forgetting.

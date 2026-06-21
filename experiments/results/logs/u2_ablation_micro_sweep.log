@@ -1,0 +1,32 @@
+====================================================
+   MESU u2-Ablation Micro-Sweep (Baseline Width 32) 
+====================================================
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 2614.27it/s]
+
+[1/2] Running with u2 ENABLED (MESU default)...
+  N =   5 | Recall: 40.00%
+  N =  10 | Recall: 16.67%
+  N =  20 | Recall:  3.33%
+  N =  50 | Recall:  2.67%
+  N = 100 | Recall:  1.00%
+  N = 200 | Recall:  0.50%
+  Fitted u2 Enabled: Recall(N) = 2.0581 / N^1.1564
+
+[2/2] Running with u2 ABLATED (u2_enabled=False)...
+  N =   5 | Recall: 40.00%
+  N =  10 | Recall: 20.00%
+  N =  20 | Recall:  8.33%
+  N =  50 | Recall:  6.67%
+  N = 100 | Recall:  1.33%
+  N = 200 | Recall:  0.83%
+  Fitted u2 Ablated: Recall(N) = 2.2684 / N^1.0489
+
+====================================================
+   Scientific Comparison
+====================================================
+  MESU (u2 Enabled): alpha = 1.1564
+  MESU (u2 Ablated): alpha = 1.0489
+  Difference:       -0.1075
+  Verdict: The u2 pathway has negligible impact on the power-law decay exponent.

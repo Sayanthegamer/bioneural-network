@@ -1,0 +1,175 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+====================================================
+  MESU Capacity Wall Scaling Sweep: N = 5
+====================================================
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 3229.79it/s]
+[*] Pre-embedding 5 facts and queries...
+[*] Embedding complete.
+  Seed  42 | Final Recall: 60.0% | Forgetting: 0.0% | Drift: 1.2917 | Runtime: 0.22s
+  Seed 101 | Final Recall: 40.0% | Forgetting: 20.0% | Drift: 1.4891 | Runtime: 0.14s
+  Seed 202 | Final Recall: 20.0% | Forgetting: 20.0% | Drift: 1.3482 | Runtime: 0.16s
+  Seed 303 | Final Recall: 80.0% | Forgetting: 0.0% | Drift: 1.4410 | Runtime: 0.14s
+  Seed 404 | Final Recall: 40.0% | Forgetting: 0.0% | Drift: 1.3294 | Runtime: 0.15s
+  Seed 505 | Final Recall: 40.0% | Forgetting: 20.0% | Drift: 1.5098 | Runtime: 0.15s
+  Seed 606 | Final Recall: 40.0% | Forgetting: 40.0% | Drift: 1.2972 | Runtime: 0.15s
+  Seed 707 | Final Recall: 60.0% | Forgetting: 40.0% | Drift: 1.5334 | Runtime: 0.15s
+  Seed 808 | Final Recall: 60.0% | Forgetting: 0.0% | Drift: 1.3415 | Runtime: 0.15s
+  Seed 909 | Final Recall: 40.0% | Forgetting: 0.0% | Drift: 1.1557 | Runtime: 0.15s
+--> [SUMMARY] N = 5 | Recall: 48.00% +/- 16.00% | Forgetting: 14.00% +/- 15.62%
+    Retention Band: Failed Retention (< 50%)
+
+====================================================
+  MESU Capacity Wall Scaling Sweep: N = 10
+====================================================
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 3000.82it/s]
+[*] Pre-embedding 10 facts and queries...
+[*] Embedding complete.
+  Seed  42 | Final Recall: 20.0% | Forgetting: 30.0% | Drift: 1.6602 | Runtime: 0.34s
+  Seed 101 | Final Recall: 20.0% | Forgetting: 20.0% | Drift: 1.6032 | Runtime: 0.30s
+  Seed 202 | Final Recall: 10.0% | Forgetting: 40.0% | Drift: 1.6138 | Runtime: 0.30s
+  Seed 303 | Final Recall: 30.0% | Forgetting: 30.0% | Drift: 1.6227 | Runtime: 0.31s
+  Seed 404 | Final Recall: 30.0% | Forgetting: 40.0% | Drift: 1.6735 | Runtime: 0.29s
+  Seed 505 | Final Recall: 20.0% | Forgetting: 30.0% | Drift: 1.7334 | Runtime: 0.30s
+  Seed 606 | Final Recall: 20.0% | Forgetting: 20.0% | Drift: 1.6486 | Runtime: 0.30s
+  Seed 707 | Final Recall: 20.0% | Forgetting: 20.0% | Drift: 1.6257 | Runtime: 0.30s
+  Seed 808 | Final Recall: 20.0% | Forgetting: 20.0% | Drift: 1.6339 | Runtime: 0.30s
+  Seed 909 | Final Recall: 10.0% | Forgetting: 40.0% | Drift: 1.6137 | Runtime: 0.32s
+--> [SUMMARY] N = 10 | Recall: 20.00% +/- 6.32% | Forgetting: 29.00% +/- 8.31%
+    Retention Band: Failed Retention (< 50%)
+
+====================================================
+  MESU Capacity Wall Scaling Sweep: N = 20
+====================================================
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 2771.20it/s]
+[*] Pre-embedding 20 facts and queries...
+[*] Embedding complete.
+  Seed  42 | Final Recall: 0.0% | Forgetting: 35.0% | Drift: 1.9344 | Runtime: 0.61s
+  Seed 101 | Final Recall: 5.0% | Forgetting: 30.0% | Drift: 1.7461 | Runtime: 0.58s
+  Seed 202 | Final Recall: 5.0% | Forgetting: 25.0% | Drift: 1.8084 | Runtime: 0.67s
+  Seed 303 | Final Recall: 10.0% | Forgetting: 30.0% | Drift: 1.6795 | Runtime: 0.62s
+  Seed 404 | Final Recall: 15.0% | Forgetting: 30.0% | Drift: 1.8767 | Runtime: 0.62s
+  Seed 505 | Final Recall: 5.0% | Forgetting: 35.0% | Drift: 1.8906 | Runtime: 0.61s
+  Seed 606 | Final Recall: 10.0% | Forgetting: 25.0% | Drift: 2.0189 | Runtime: 0.74s
+  Seed 707 | Final Recall: 10.0% | Forgetting: 15.0% | Drift: 1.8089 | Runtime: 0.65s
+  Seed 808 | Final Recall: 5.0% | Forgetting: 15.0% | Drift: 1.8374 | Runtime: 0.67s
+  Seed 909 | Final Recall: 10.0% | Forgetting: 35.0% | Drift: 1.9565 | Runtime: 0.68s
+--> [SUMMARY] N = 20 | Recall: 7.50% +/- 4.03% | Forgetting: 27.50% +/- 7.16%
+    Retention Band: Failed Retention (< 50%)
+
+====================================================
+  MESU Capacity Wall Scaling Sweep: N = 50
+====================================================
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 2997.26it/s]
+[*] Pre-embedding 50 facts and queries...
+[*] Embedding complete.
+  Seed  42 | Final Recall: 4.0% | Forgetting: 60.0% | Drift: 2.3935 | Runtime: 1.57s
+  Seed 101 | Final Recall: 2.0% | Forgetting: 62.0% | Drift: 2.4557 | Runtime: 1.54s
+  Seed 202 | Final Recall: 2.0% | Forgetting: 74.0% | Drift: 2.3557 | Runtime: 1.70s
+  Seed 303 | Final Recall: 4.0% | Forgetting: 72.0% | Drift: 2.4324 | Runtime: 1.70s
+  Seed 404 | Final Recall: 4.0% | Forgetting: 66.0% | Drift: 2.3772 | Runtime: 1.70s
+  Seed 505 | Final Recall: 2.0% | Forgetting: 60.0% | Drift: 2.4758 | Runtime: 1.70s
+  Seed 606 | Final Recall: 2.0% | Forgetting: 66.0% | Drift: 2.4835 | Runtime: 1.70s
+  Seed 707 | Final Recall: 4.0% | Forgetting: 72.0% | Drift: 2.5638 | Runtime: 1.70s
+  Seed 808 | Final Recall: 4.0% | Forgetting: 58.0% | Drift: 2.4778 | Runtime: 1.72s
+  Seed 909 | Final Recall: 2.0% | Forgetting: 68.0% | Drift: 2.4761 | Runtime: 1.68s
+--> [SUMMARY] N = 50 | Recall: 3.00% +/- 1.00% | Forgetting: 65.80% +/- 5.40%
+    Retention Band: Failed Retention (< 50%)
+
+====================================================
+  MESU Capacity Wall Scaling Sweep: N = 100
+====================================================
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 4322.90it/s]
+[*] Pre-embedding 100 facts and queries...
+[*] Embedding complete.
+  Seed  42 | Final Recall: 1.0% | Forgetting: 98.0% | Drift: 4.0312 | Runtime: 3.80s
+  Seed 101 | Final Recall: 1.0% | Forgetting: 95.0% | Drift: 4.2022 | Runtime: 3.42s
+  Seed 202 | Final Recall: 1.0% | Forgetting: 99.0% | Drift: 3.9413 | Runtime: 3.55s
+  Seed 303 | Final Recall: 1.0% | Forgetting: 99.0% | Drift: 3.8717 | Runtime: 3.44s
+  Seed 404 | Final Recall: 1.0% | Forgetting: 97.0% | Drift: 3.9635 | Runtime: 3.45s
+  Seed 505 | Final Recall: 1.0% | Forgetting: 99.0% | Drift: 4.0818 | Runtime: 3.43s
+  Seed 606 | Final Recall: 1.0% | Forgetting: 98.0% | Drift: 3.9932 | Runtime: 3.53s
+  Seed 707 | Final Recall: 2.0% | Forgetting: 96.0% | Drift: 3.9754 | Runtime: 3.47s
+  Seed 808 | Final Recall: 1.0% | Forgetting: 97.0% | Drift: 4.0812 | Runtime: 3.42s
+  Seed 909 | Final Recall: 1.0% | Forgetting: 99.0% | Drift: 4.0268 | Runtime: 3.81s
+--> [SUMMARY] N = 100 | Recall: 1.10% +/- 0.30% | Forgetting: 97.70% +/- 1.35%
+    Retention Band: Failed Retention (< 50%)
+
+====================================================
+  MESU Capacity Wall Scaling Sweep: N = 200
+====================================================
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 3122.72it/s]
+[*] Pre-embedding 200 facts and queries...
+[*] Embedding complete.
+  Seed  42 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.8171 | Runtime: 7.31s
+  Seed 101 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.9391 | Runtime: 7.14s
+  Seed 202 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.9698 | Runtime: 7.38s
+  Seed 303 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.7785 | Runtime: 6.96s
+  Seed 404 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.8876 | Runtime: 6.95s
+  Seed 505 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.8310 | Runtime: 7.32s
+  Seed 606 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.9963 | Runtime: 7.00s
+  Seed 707 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.8719 | Runtime: 7.08s
+  Seed 808 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.8362 | Runtime: 6.90s
+  Seed 909 | Final Recall: 0.5% | Forgetting: 99.5% | Drift: 7.8430 | Runtime: 6.88s
+--> [SUMMARY] N = 200 | Recall: 0.50% +/- 0.00% | Forgetting: 99.50% +/- 0.00%
+    Retention Band: Failed Retention (< 50%)
+
+====================================================
+  MESU Capacity Wall Scaling Sweep: N = 400
+====================================================
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 3410.92it/s]
+[*] Pre-embedding 400 facts and queries...
+[*] Embedding complete.
+  Seed  42 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.3593 | Runtime: 14.49s
+  Seed 101 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.3339 | Runtime: 14.23s
+  Seed 202 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.9041 | Runtime: 14.22s
+  Seed 303 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.6707 | Runtime: 14.06s
+  Seed 404 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.2923 | Runtime: 14.34s
+  Seed 505 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.3789 | Runtime: 14.77s
+  Seed 606 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.7083 | Runtime: 14.81s
+  Seed 707 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.3323 | Runtime: 14.91s
+  Seed 808 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.6732 | Runtime: 15.75s
+  Seed 909 | Final Recall: 0.2% | Forgetting: 99.8% | Drift: 13.2085 | Runtime: 15.95s
+--> [SUMMARY] N = 400 | Recall: 0.25% +/- 0.00% | Forgetting: 99.75% +/- 0.00%
+    Retention Band: Failed Retention (< 50%)
+
+====================================================
+  MESU Capacity Wall Scaling Sweep: N = 800
+====================================================
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 3806.89it/s]
+[*] Pre-embedding 800 facts and queries...
+[*] Embedding complete.
+  Seed  42 | Final Recall: 0.1% | Forgetting: 99.9% | Drift: 21.3331 | Runtime: 33.24s
+  Seed 101 | Final Recall: 0.1% | Forgetting: 99.8% | Drift: 21.4365 | Runtime: 32.80s
+  Seed 202 | Final Recall: 0.1% | Forgetting: 99.9% | Drift: 21.0611 | Runtime: 34.64s
+  Seed 303 | Final Recall: 0.1% | Forgetting: 99.9% | Drift: 20.8699 | Runtime: 36.65s
+  Seed 404 | Final Recall: 0.1% | Forgetting: 99.9% | Drift: 20.8135 | Runtime: 40.02s
+  Seed 505 | Final Recall: 0.1% | Forgetting: 99.9% | Drift: 21.0782 | Runtime: 34.95s
+  Seed 606 | Final Recall: 0.1% | Forgetting: 99.9% | Drift: 21.6491 | Runtime: 33.68s
+  Seed 707 | Final Recall: 0.1% | Forgetting: 99.8% | Drift: 20.5672 | Runtime: 34.42s
+  Seed 808 | Final Recall: 0.1% | Forgetting: 99.9% | Drift: 20.7807 | Runtime: 34.21s
+  Seed 909 | Final Recall: 0.1% | Forgetting: 99.9% | Drift: 20.8325 | Runtime: 33.00s
+--> [SUMMARY] N = 800 | Recall: 0.12% +/- 0.00% | Forgetting: 99.85% +/- 0.05%
+    Retention Band: Failed Retention (< 50%)
+
+====================================================
+  MESU Capacity Scaling Summary Table
+====================================================
+N Facts    | Recall (Mean +/- Std)     | Forgetting (Mean +/- Std) | Retention Band           
+--------------------------------------------------------------------------------------------
+5          | 48.00% +/- 16.00% | 14.00% +/- 15.62% | Failed (< 50%)           
+10         | 20.00% +/-  6.32% | 29.00% +/-  8.31% | Failed (< 50%)           
+20         |  7.50% +/-  4.03% | 27.50% +/-  7.16% | Failed (< 50%)           
+50         |  3.00% +/-  1.00% | 65.80% +/-  5.40% | Failed (< 50%)           
+100        |  1.10% +/-  0.30% | 97.70% +/-  1.35% | Failed (< 50%)           
+200        |  0.50% +/-  0.00% | 99.50% +/-  0.00% | Failed (< 50%)           
+400        |  0.25% +/-  0.00% | 99.75% +/-  0.00% | Failed (< 50%)           
+800        |  0.12% +/-  0.00% | 99.85% +/-  0.05% | Failed (< 50%)           

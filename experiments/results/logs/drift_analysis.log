@@ -1,0 +1,43 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[*] Initializing local feature extractor: all-MiniLM-L6-v2
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 3019.53it/s]
+
+[*] Evaluating drift with u2_enabled = True
+  Seed  42 | Recall: 0.60 | Forgetting: 0.00 | Active Drift (post-train): 0.1598 | Dormant Drift: 0.2157
+  Seed 101 | Recall: 0.00 | Forgetting: 0.20 | Active Drift (post-train): 0.1614 | Dormant Drift: 0.2107
+  Seed 202 | Recall: 0.60 | Forgetting: -0.20 | Active Drift (post-train): 0.1461 | Dormant Drift: 0.2214
+  Seed 303 | Recall: 0.40 | Forgetting: 0.20 | Active Drift (post-train): 0.1482 | Dormant Drift: 0.2039
+  Seed 404 | Recall: 0.40 | Forgetting: 0.20 | Active Drift (post-train): 0.1393 | Dormant Drift: 0.2095
+  Seed 505 | Recall: 0.60 | Forgetting: 0.40 | Active Drift (post-train): 0.1562 | Dormant Drift: 0.2143
+  Seed 606 | Recall: 0.60 | Forgetting: 0.00 | Active Drift (post-train): 0.1410 | Dormant Drift: 0.2305
+  Seed 707 | Recall: 0.20 | Forgetting: 0.20 | Active Drift (post-train): 0.1907 | Dormant Drift: 0.2814
+  Seed 808 | Recall: 0.80 | Forgetting: 0.00 | Active Drift (post-train): 0.1611 | Dormant Drift: 0.2162
+  Seed 909 | Recall: 0.40 | Forgetting: 0.00 | Active Drift (post-train): 0.1562 | Dormant Drift: 0.2239
+
+[*] Evaluating drift with u2_enabled = False
+  Seed  42 | Recall: 0.40 | Forgetting: -0.20 | Active Drift (post-train): 0.2597 | Dormant Drift: 0.4777
+  Seed 101 | Recall: 0.20 | Forgetting: 0.00 | Active Drift (post-train): 0.2465 | Dormant Drift: 0.4007
+  Seed 202 | Recall: 0.60 | Forgetting: -0.20 | Active Drift (post-train): 0.2381 | Dormant Drift: 0.4068
+  Seed 303 | Recall: 0.40 | Forgetting: 0.00 | Active Drift (post-train): 0.2400 | Dormant Drift: 0.3972
+  Seed 404 | Recall: 0.60 | Forgetting: 0.00 | Active Drift (post-train): 0.2532 | Dormant Drift: 0.4441
+  Seed 505 | Recall: 0.40 | Forgetting: 0.20 | Active Drift (post-train): 0.2439 | Dormant Drift: 0.4503
+  Seed 606 | Recall: 0.40 | Forgetting: 0.00 | Active Drift (post-train): 0.2309 | Dormant Drift: 0.4711
+  Seed 707 | Recall: 0.20 | Forgetting: 0.00 | Active Drift (post-train): 0.2326 | Dormant Drift: 0.5240
+  Seed 808 | Recall: 0.40 | Forgetting: 0.20 | Active Drift (post-train): 0.2418 | Dormant Drift: 0.5319
+  Seed 909 | Recall: 0.40 | Forgetting: 0.00 | Active Drift (post-train): 0.2410 | Dormant Drift: 0.4902
+
+[SUCCESS] Drift analysis CSV saved to: experiments/results/drift_analysis.csv
+
+Summary for u2_enabled = True:
+  Forgetting:                     0.1000 +/- 0.1612
+  Active Drift (from W0):         0.1202 +/- 0.0107
+  Active Drift (from post-train): 0.1560 +/- 0.0139
+  Correlation rho(drift_active_post, forgetting): 0.2317
+  Correlation rho(drift_active_w0, forgetting): 0.1917
+
+Summary for u2_enabled = False:
+  Forgetting:                     -0.0000 +/- 0.1265
+  Active Drift (from W0):         0.2557 +/- 0.0223
+  Active Drift (from post-train): 0.2428 +/- 0.0083
+  Correlation rho(drift_active_post, forgetting): -0.2308
+  Correlation rho(drift_active_w0, forgetting): -0.1957

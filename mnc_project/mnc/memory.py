@@ -87,9 +87,9 @@ class MESUEngine:
                 if u2_key in self.cascade_states:
                     self.cascade_states[u2_key].copy_(self.cascade_states[u2_key] / (self.cascade_states[u2_key].norm(p=2, dim=1, keepdim=True) + 1e-8))
             
-            # Prior Relaxation: Lock confident weights
-            # Balanced locking of updated parameters
-            var.sub_(var * torch.clamp(raw_grad.abs() * 0.2, max=0.25))
+            # Prior Relaxation: Lock confident weights using unscaled gradient
+            # This decouples the locking rate from parameter count/layer width scaling
+            var.sub_(var * torch.clamp(param.grad.data.abs() * 0.2, max=0.25))
             
             # Pull variance back toward the tighter prior (relaxation scaled by self.alpha_decay)
             var.add_(self.alpha_decay * ((self.sigma_prior**2) - var))

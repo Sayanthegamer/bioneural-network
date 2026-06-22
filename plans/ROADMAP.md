@@ -38,7 +38,7 @@ All initial Phase 3/4 validation concerns and the **8-part Empirical Characteriz
 1.  **Representational Capacity & Interference Hardness:** **Resolved** (Study 2 & `parameter_overlap.py`), showing orthogonal gradients ($\cos(\theta) \approx -0.02$) and sparse bottleneck overlap.
 2.  **Gradient Step Asymmetry & Capacity Walls:** **Resolved** (`capacity_wall.py`), revealing a power-law recall degradation ($1/N$ recency-dominated overwrite) when facts scale up to 800.
 3.  **Decoder-Only Transformer Control:** **Resolved** (Study 5), confirming the MNC matches parameter-scaled Transformer baselines.
-4.  **u2 Cascade Restorative Pull Trajectory:** **Resolved** (Study 4 & `drift_analysis.py`), proving that $u_2$ acts as a stabilizer that halves parameter drift ($D_{\text{drift}} = 0.156$ vs. $0.243$ when disabled).
+4.  **u2 Cascade Restorative Pull Trajectory:** **Resolved** (Study 4 & `drift_analysis.py`), proving that $u_2$ acts as a stabilizer that reduces active drift by **35.7%** ($D_{\text{drift}} = 0.156$ vs. $0.243$ when disabled, or by **53%** from $W_0$: $0.120$ vs. $0.256$).
 5.  **Distance Scaling Autocalibration:** **Resolved** and analytically derived.
 6.  **Variance Telemetry Sweep:** **Resolved** (`variance_telemetry.py`), demonstrating tunable non-zero equilibria based on the decay rate $\alpha$.
 7.  **Replay Complementarity:** **Resolved** (`replay_comparison.py`), showing that combining MESU's metaplastic gating with experience replay (size 10) reduces forgetting by **10.4x** (to 6.4%), and by **12.8x** (to 5.2%) with buffer size 50, proving they are complementary.

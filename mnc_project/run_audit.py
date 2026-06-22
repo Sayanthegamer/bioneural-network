@@ -19,7 +19,7 @@ def run_evaluation():
     
     # 2. Pipeline
     pipeline = JournalPipeline()
-    journal_path = "data/journal.txt"
+    journal_path = "mnc_project/data/journal.txt"
     
     # 3. Execution Loop (10-day simulation)
     # Day 1-5 (Training/Consolidation), Day 6-9 (Interference), Day 10 (Recall)

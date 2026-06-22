@@ -101,7 +101,7 @@ Results averaged across 10 random seeds to isolate continual learning variables:
 | **1. Baselines** | [MESUEngine](file:///c:/Users/Anon/Downloads/Northstar/mnc_project/mnc/memory.py) vs. SGD baseline | SGD collapses ($0.20$ to $1.40/5$ recall); MESU maintains $2.90/5$ recall (93.55% ratio of means). Note: sgd_0.1 ratio is 107.69% (Day 5: 1.30 -> Day 10: 1.40) due to small-sample recall noise. |
 | **2. Interference** | Shared-label distractors | MESU limits displaced target facts to $0.90$ (SGD collapses). |
 | **3. Budgets** | Step budget symmetry | Asymmetric (15/3): **2.90** mean; Symmetric (5/5): **2.20** mean; Symmetric (15/15): **2.30** mean (ranking is seed-sensitive and unstable across reruns). |
-| **4. Telemetry** | $u_2$ cascade anchor | $u_2$ pull reduces parameter drift $D(u_2, W_5)$ by **12%** ($4.56 \to 4.03$). Note: drift-reduction effect sizes vary significantly by protocol (negligible in this full sequential run, but strong 21.3% reduction in the isolated rest-phase sweep). |
+| **4. Telemetry** | $u_2$ cascade anchor | $u_2$ pull reduces cascade drift $D(u_2, W_5)$ by **5.4%** ($5.51 \to 5.21$). Note: drift-reduction effect sizes vary significantly by protocol (negligible in this full sequential run, but strong 35.7% reduction in the isolated rest-phase sweep). |
 | **5. Parameter Efficiency** | MNC vs. Transformer | 12.6K parameter MNC achieves comparable recall to 5.2M Transformer (2.90 vs. 3.20 recall). |
 
 ---

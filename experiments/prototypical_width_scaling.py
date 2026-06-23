@@ -136,8 +136,8 @@ def main():
     
     pipeline = JournalPipeline()
     seeds = [42, 101, 202]
-    widths = [32, 64, 128, 256]
-    capacity_steps = [5, 10, 20, 50, 100, 200, 400, 800]
+    widths = [32, 64, 128, 256, 512]
+    capacity_steps = [5, 10, 20, 50, 100, 200, 400, 800, 1200, 1600]
     
     results_dir = "experiments/results"
     os.makedirs(results_dir, exist_ok=True)
@@ -150,195 +150,194 @@ def main():
     ]
     
     summary_data = {} # (width, n) -> {metrics}
+    computed = set()
+    raw_rows = []
     
-    # Check if CSV already exists and has complete data
-    use_existing_csv = False
+    # Load existing CSV if it exists
     if os.path.exists(csv_path):
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-        if len(lines) >= 97:  # 1 header + 4 widths * 8 steps * 3 seeds = 97 lines
-            print("[*] Detected complete existing CSV results. Loading data to compile report and plots...")
-            use_existing_csv = True
-
-    if use_existing_csv:
-        # Load summary_data from existing CSV
-        raw_rows = []
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                raw_rows.append({
-                    "width": int(row["width"]),
-                    "num_facts": int(row["num_facts"]),
-                    "prototype_acc": float(row["prototype_acc"]),
-                    "knn1_acc": float(row["knn1_acc"]),
-                    "mean_radius": float(row["mean_radius"]),
-                    "mean_nearest_other": float(row["mean_nearest_other"]),
-                    "separation_ratio": float(row["separation_ratio"]),
-                    "mean_margin": float(row["mean_margin"]),
-                    "p5_margin": float(row["p5_margin"]),
-                    "min_margin": float(row["min_margin"])
-                })
-        
-        # Group by (width, n_facts)
-        for width in widths:
-            for n_facts in capacity_steps:
-                matching_rows = [r for r in raw_rows if r["width"] == width and r["num_facts"] == n_facts]
-                if len(matching_rows) > 0:
-                    avg_proto = np.mean([r["prototype_acc"] for r in matching_rows])
-                    std_proto = np.std([r["prototype_acc"] for r in matching_rows])
-                    avg_knn = np.mean([r["knn1_acc"] for r in matching_rows])
-                    avg_margin = np.mean([r["mean_margin"] for r in matching_rows])
-                    avg_p5_margin = np.mean([r["p5_margin"] for r in matching_rows])
-                    avg_min_margin = np.mean([r["min_margin"] for r in matching_rows])
-                    avg_sep_ratio = np.mean([r["separation_ratio"] for r in matching_rows])
-                    avg_radius = np.mean([r["mean_radius"] for r in matching_rows])
-                    avg_nearest = np.mean([r["mean_nearest_other"] for r in matching_rows])
-                    
-                    summary_data[(width, n_facts)] = {
-                        "prototype_acc": avg_proto,
-                        "prototype_acc_std": std_proto,
-                        "knn1_acc": avg_knn,
-                        "mean_margin": avg_margin,
-                        "p5_margin": avg_p5_margin,
-                        "min_margin": avg_min_margin,
-                        "separation_ratio": avg_sep_ratio,
-                        "mean_radius": avg_radius,
-                        "mean_nearest_other": avg_nearest
-                    }
-    else:
+        try:
+            with open(csv_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    w = int(row["width"])
+                    n = int(row["num_facts"])
+                    s = int(row["seed"])
+                    computed.add((w, n, s))
+                    raw_rows.append({
+                        "seed": s,
+                        "width": w,
+                        "num_facts": n,
+                        "prototype_acc": float(row["prototype_acc"]),
+                        "knn1_acc": float(row["knn1_acc"]),
+                        "mean_radius": float(row["mean_radius"]),
+                        "mean_nearest_other": float(row["mean_nearest_other"]),
+                        "separation_ratio": float(row["separation_ratio"]),
+                        "mean_margin": float(row["mean_margin"]),
+                        "median_margin": float(row["median_margin"]) if "median_margin" in row else float(row["mean_margin"]),
+                        "p5_margin": float(row["p5_margin"]),
+                        "min_margin": float(row["min_margin"]),
+                        "runtime_sec": float(row["runtime_sec"]) if "runtime_sec" in row else 0.0
+                    })
+            print(f"[*] Loaded {len(computed)} computed configurations from existing CSV.")
+        except Exception as e:
+            print(f"[!] Error reading existing CSV: {e}. Starting fresh.")
+            computed = set()
+            raw_rows = []
+            
+    # Write header if file doesn't exist or is empty
+    if not os.path.exists(csv_path) or len(raw_rows) == 0:
         with open(csv_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=headers)
             writer.writeheader()
+
+    # Determine what is missing and run it
+    for n_facts in capacity_steps:
+        needs_ingestion = False
+        for width in widths:
+            for seed in seeds:
+                if (width, n_facts, seed) not in computed:
+                    needs_ingestion = True
+                    break
+        
+        if not needs_ingestion:
+            print(f"[CACHE] Skipping N = {n_facts} facts (all widths and seeds already computed).")
+            continue
             
-        for n_facts in capacity_steps:
-            print(f"\n[*] Preparing N = {n_facts} facts...")
-            facts = generate_facts(n_facts)
-            
-            # Pre-embed facts to reuse across widths and seeds (optimization)
-            embedded_statements = [pipeline.embed_sentence(f["statement"]) for f in facts]
-            embedded_queries = [pipeline.embed_sentence(f["query"]) for f in facts]
-            
-            for width in widths:
-                print(f"  [-] Evaluating Bottleneck Width = {width}...")
+        print(f"\n[*] Preparing N = {n_facts} facts...")
+        facts = generate_facts(n_facts)
+        
+        # Pre-embed facts
+        embedded_statements = [pipeline.embed_sentence(f["statement"]) for f in facts]
+        embedded_queries = [pipeline.embed_sentence(f["query"]) for f in facts]
+        
+        for width in widths:
+            for seed in seeds:
+                if (width, n_facts, seed) in computed:
+                    print(f"  [CACHE] Skipping Width = {width}, Seed = {seed} (already computed).")
+                    continue
+                    
+                print(f"  [-] Evaluating Bottleneck Width = {width}, Seed = {seed}...")
+                t_start = time.time()
+                set_seed(seed)
                 
-                run_results = []
-                for seed in seeds:
-                    t_start = time.time()
-                    set_seed(seed)
+                # Setup frozen backbone representation
+                backbone_linear = MNCLinear(384, width)
+                for param in backbone_linear.parameters():
+                    param.requires_grad = False
                     
-                    # Setup frozen backbone representation
-                    backbone_linear = MNCLinear(384, width)
-                    for param in backbone_linear.parameters():
-                        param.requires_grad = False
+                backbone = nn.Sequential(
+                    backbone_linear,
+                    ScaleDistances(SHIFT_384, SCALE_384),
+                    nn.Tanh()
+                )
+                backbone.eval()
+                
+                model = MNCPrototypicalNetwork(backbone, bottleneck_dim=width, num_classes=n_facts)
+                model.eval()
+                
+                # Ingestion
+                statement_projections = []
+                fact_labels = [f["label"] for f in facts]
+                
+                with torch.no_grad():
+                    for idx in range(n_facts):
+                        statement_vec = embedded_statements[idx]
+                        label = facts[idx]["label"]
+                        model.add_fact(statement_vec, label)
                         
-                    backbone = nn.Sequential(
-                        backbone_linear,
-                        ScaleDistances(SHIFT_384, SCALE_384),
-                        nn.Tanh()
-                    )
-                    backbone.eval()
+                        z_proj = model.backbone(statement_vec).squeeze(0)
+                        statement_projections.append(z_proj)
+                        
+                    statement_projections = torch.stack(statement_projections)
                     
-                    model = MNCPrototypicalNetwork(backbone, bottleneck_dim=width, num_classes=n_facts)
-                    model.eval()
+                    # Vectorized query projections
+                    q_vecs = torch.cat(embedded_queries, dim=0) # [n_facts, 384]
+                    query_projections = model.backbone(q_vecs) # [n_facts, width]
                     
-                    # Ingestion
-                    statement_projections = []
-                    fact_labels = [f["label"] for f in facts]
+                    # Chunked pairwise L1 distance computation to prevent memory allocation blowouts
+                    chunk_size = 200
+                    dists_all_list = []
+                    for i in range(0, n_facts, chunk_size):
+                        q_chunk = query_projections[i:i+chunk_size]  # [chunk_size, width]
+                        diff_chunk = q_chunk.unsqueeze(1) - model.prototypes.unsqueeze(0)  # [chunk_size, n_facts, width]
+                        dists_chunk = diff_chunk.abs().sum(dim=2)  # [chunk_size, n_facts]
+                        dists_all_list.append(dists_chunk)
+                    dists_all = torch.cat(dists_all_list, dim=0)  # [n_facts, n_facts]
                     
-                    with torch.no_grad():
-                        for idx in range(n_facts):
-                            statement_vec = embedded_statements[idx]
-                            label = facts[idx]["label"]
-                            model.add_fact(statement_vec, label)
-                            
-                            z_proj = model.backbone(statement_vec).squeeze(0)
-                            statement_projections.append(z_proj)
-                            
-                        statement_projections = torch.stack(statement_projections)
-                        query_projections = torch.stack([model.backbone(q_vec).squeeze(0) for q_vec in embedded_queries])
+                    # Vectorized prototype recall
+                    preds = (-dists_all).argmax(dim=-1).tolist()
+                    proto_correct = sum(1 for idx in range(n_facts) if preds[idx] == facts[idx]["label"])
+                    proto_acc = proto_correct / float(n_facts)
+                    
+                    # Vectorized 1-NN recall
+                    knn1_indices = dists_all.argmin(dim=1).tolist()
+                    knn1_correct = sum(1 for idx in range(n_facts) if fact_labels[knn1_indices[idx]] == facts[idx]["label"])
+                    knn1_acc = knn1_correct / float(n_facts)
+                    
+                    # Vectorized geometry metrics
+                    diff_self = query_projections - model.prototypes  # [n_facts, width]
+                    radii_tensor = diff_self.abs().sum(dim=1)
+                    radii = radii_tensor.tolist()
+                    
+                    # Mask diagonal for nearest other
+                    mask = torch.eye(n_facts, device=dists_all.device) * 1e9
+                    dists_masked = dists_all + mask
+                    nearest_others_tensor = dists_masked.min(dim=1).values
+                    nearest_others = nearest_others_tensor.tolist()
+                    
+                    margins_tensor = nearest_others_tensor - radii_tensor
+                    margins = margins_tensor.tolist()
+                    
+                    mean_radius = radii_tensor.mean().item()
+                    mean_nearest_other = nearest_others_tensor.mean().item()
+                    sep_ratio = mean_nearest_other / (mean_radius + 1e-8)
+                    
+                    mean_margin = margins_tensor.mean().item()
+                    median_margin = margins_tensor.median().item()
+                    p5_margin = np.percentile(margins, 5)
+                    min_margin = margins_tensor.min().item()
+                    
+                    runtime = time.time() - t_start
+                    
+                    res = {
+                        "seed": seed,
+                        "width": width,
+                        "num_facts": n_facts,
+                        "prototype_acc": proto_acc,
+                        "knn1_acc": knn1_acc,
+                        "mean_radius": mean_radius,
+                        "mean_nearest_other": mean_nearest_other,
+                        "separation_ratio": sep_ratio,
+                        "mean_margin": mean_margin,
+                        "median_margin": median_margin,
+                        "p5_margin": p5_margin,
+                        "min_margin": min_margin,
+                        "runtime_sec": runtime
+                    }
+                    raw_rows.append(res)
+                    computed.add((width, n_facts, seed))
+                    
+                    # Save raw result to CSV in real-time
+                    with open(csv_path, 'a', newline='', encoding='utf-8') as csv_file:
+                        writer = csv.DictWriter(csv_file, fieldnames=headers)
+                        writer.writerow(res)
                         
-                        # Prototype recall
-                        proto_correct = 0
-                        for idx in range(n_facts):
-                            logits = model(embedded_queries[idx])
-                            pred = logits.argmax(dim=-1).item()
-                            if pred == facts[idx]["label"]:
-                                proto_correct += 1
-                        proto_acc = proto_correct / float(n_facts)
-                        
-                        # 1-NN recall
-                        knn1_correct = 0
-                        for idx in range(n_facts):
-                            pred1 = classify_knn(query_projections[idx], statement_projections, fact_labels, k=1)
-                            if pred1 == facts[idx]["label"]:
-                                knn1_correct += 1
-                        knn1_acc = knn1_correct / float(n_facts)
-                        
-                        # Geometry metrics
-                        radii = []
-                        nearest_others = []
-                        margins = []
-                        for idx in range(n_facts):
-                            correct_proto = model.prototypes[idx]
-                            q_z = query_projections[idx]
-                            radius = (q_z - correct_proto).abs().sum().item()
-                            radii.append(radius)
-                            
-                            other_dists = []
-                            for other_idx in range(n_facts):
-                                if other_idx != idx:
-                                    other_proto = model.prototypes[other_idx]
-                                    dist = (q_z - other_proto).abs().sum().item()
-                                    other_dists.append(dist)
-                            
-                            nearest_other = min(other_dists) if len(other_dists) > 0 else 0.0
-                            nearest_others.append(nearest_other)
-                            margins.append(nearest_other - radius)
-                            
-                        mean_radius = np.mean(radii)
-                        mean_nearest_other = np.mean(nearest_others)
-                        sep_ratio = mean_nearest_other / (mean_radius + 1e-8)
-                        
-                        mean_margin = np.mean(margins)
-                        median_margin = np.median(margins)
-                        p5_margin = np.percentile(margins, 5)
-                        min_margin = np.min(margins)
-                        
-                        runtime = time.time() - t_start
-                        
-                        res = {
-                            "seed": seed,
-                            "width": width,
-                            "num_facts": n_facts,
-                            "prototype_acc": proto_acc,
-                            "knn1_acc": knn1_acc,
-                            "mean_radius": mean_radius,
-                            "mean_nearest_other": mean_nearest_other,
-                            "separation_ratio": sep_ratio,
-                            "mean_margin": mean_margin,
-                            "median_margin": median_margin,
-                            "p5_margin": p5_margin,
-                            "min_margin": min_margin,
-                            "runtime_sec": runtime
-                        }
-                        run_results.append(res)
-                        
-                # Save raw results
-                with open(csv_path, 'a', newline='', encoding='utf-8') as f:
-                    writer = csv.DictWriter(f, fieldnames=headers)
-                    for r in run_results:
-                        writer.writerow(r)
-                        
-                # Compile stats
-                avg_proto = np.mean([r["prototype_acc"] for r in run_results])
-                std_proto = np.std([r["prototype_acc"] for r in run_results])
-                avg_knn = np.mean([r["knn1_acc"] for r in run_results])
-                avg_margin = np.mean([r["mean_margin"] for r in run_results])
-                avg_p5_margin = np.mean([r["p5_margin"] for r in run_results])
-                avg_min_margin = np.mean([r["min_margin"] for r in run_results])
-                avg_sep_ratio = np.mean([r["separation_ratio"] for r in run_results])
-                avg_radius = np.mean([r["mean_radius"] for r in run_results])
-                avg_nearest = np.mean([r["mean_nearest_other"] for r in run_results])
+                    print(f"      Recall: {proto_acc*100:6.2f}% | Margin (Mean/P5/Min): {mean_margin:6.4f} / {p5_margin:6.4f} / {min_margin:6.4f}")
+
+    # Rebuild summary_data from raw_rows for all configurations
+    for width in widths:
+        for n_facts in capacity_steps:
+            matching_rows = [r for r in raw_rows if r["width"] == width and r["num_facts"] == n_facts]
+            if len(matching_rows) > 0:
+                avg_proto = np.mean([r["prototype_acc"] for r in matching_rows])
+                std_proto = np.std([r["prototype_acc"] for r in matching_rows])
+                avg_knn = np.mean([r["knn1_acc"] for r in matching_rows])
+                avg_margin = np.mean([r["mean_margin"] for r in matching_rows])
+                avg_p5_margin = np.mean([r["p5_margin"] for r in matching_rows])
+                avg_min_margin = np.mean([r["min_margin"] for r in matching_rows])
+                avg_sep_ratio = np.mean([r["separation_ratio"] for r in matching_rows])
+                avg_radius = np.mean([r["mean_radius"] for r in matching_rows])
+                avg_nearest = np.mean([r["mean_nearest_other"] for r in matching_rows])
                 
                 summary_data[(width, n_facts)] = {
                     "prototype_acc": avg_proto,

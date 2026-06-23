@@ -45,10 +45,11 @@ All initial Phase 3/4 validation concerns and the **8-part Empirical Characteriz
 8.  **Parametric Isolation Sweep (`parametric_study.py`)**: **Resolved**, validating 100% linear and 99.34% MLP offline separability (confirming representational geometry), while isolating catastrophic online learning failures ($7.88\%$ online linear, $0.16\%$ online MLP).
 9.  **Frozen Representation Test (Audit 3)**: **Resolved** (`check_frozen_rep.py`), demonstrating that output template interference is the primary driver of catastrophic forgetting.
 10. **Replay Primacy Bias**: **Resolved**, diagnosing the logit domination of early classes in sequential experience replay.
+11. **Bottleneck Width-Scaling Extrapolation (W=512, N=1600):** **Resolved** (`prototypical_width_scaling.py`), confirming that representational volume capacity scales sub-linearly with bottleneck width ($N_{50} = 17.10 \cdot W^{0.81}$) and validating the geometric density collapse principle ($\text{crowding} \propto N/W$) under a frozen prototypical readout network.
 
 ## 5. Future Work & Next Steps
 
 Following the characterization of MESU v1, future research should focus on:
 1.  **Dynamic Prior Relaxation (`adaptive_alpha.py`):** Moving beyond time-based relaxation to gate prior unfreezing dynamically based on input novelty or semantic conflict.
-2.  **Bottleneck Representational Capacity:** Addressing the L1 coordinate bottleneck by scaling the channel dimensions or exploring sparse modular sub-networks to prevent recency-dominated overwrite.
+2.  **Bottleneck Representational Capacity:** Addressing the L1 coordinate bottleneck. While the Stage 3 width sweep confirmed that representational capacity is a predictable, controllable knob ($N_{50} = 17.10 \cdot W^{0.81}$), future work should investigate sparse modular sub-networks or dynamic routing to scale beyond $N \approx 2000$ facts without incurring dense parameter growth.
 3.  **Vectorized Kernel Optimization:** Compiling the custom addition-based distance calculations into native Triton or C++ operations to maximize systems-level efficiency at the edge.

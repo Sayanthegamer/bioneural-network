@@ -45,6 +45,55 @@ class MNCLinear(nn.Module):
         return out
 
 
+class MNCPrototypicalNetwork(nn.Module):
+    """
+    Non-Parametric Prototypical Readout Head Network.
+    Wraps a frozen representation backbone and classifies queries by 
+    calculating the L1 distance to online-accumulated class prototype vectors.
+    """
+    def __init__(self, representation_backbone, bottleneck_dim=32, num_classes=10):
+        super().__init__()
+        self.backbone = representation_backbone
+        self.bottleneck_dim = bottleneck_dim
+        self.num_classes = num_classes
+        
+        # Buffer to store averaged prototype coordinate vectors
+        self.register_buffer("prototypes", torch.zeros(num_classes, bottleneck_dim))
+        self.register_buffer("prototype_counts", torch.zeros(num_classes))
+        
+    @torch.no_grad()
+    def add_fact(self, x, label):
+        """
+        Extracts the bottleneck representation of a statement and updates
+        the running average prototype vector for the given label.
+        """
+        self.eval()
+        z = self.backbone(x)  # shape: [Batch, bottleneck_dim]
+        z_vec = z[0]
+        
+        count = self.prototype_counts[label].item()
+        self.prototypes[label] = (self.prototypes[label] * count + z_vec) / (count + 1)
+        self.prototype_counts[label] += 1
+
+    def forward(self, x):
+        """
+        Computes negative L1 distance from query bottleneck embeddings to
+        the stored prototypical class vectors.
+        Returns:
+            Tensor of shape [Batch, Num_Classes] containing negative L1 distances.
+        """
+        z = self.backbone(x)  # shape: [Batch, bottleneck_dim]
+        
+        # Pairwise L1 distance:
+        # z: [Batch, 1, bottleneck_dim]
+        # prototypes: [1, num_classes, bottleneck_dim]
+        diff = z.unsqueeze(1) - self.prototypes.unsqueeze(0)  # [Batch, num_classes, bottleneck_dim]
+        l1_dist = diff.abs().sum(dim=2)  # [Batch, num_classes]
+        
+        # Return negative L1 distance for argmax compatibility
+        return -l1_dist
+
+
 # ==========================================
 # Layer Micro-Validation Routine
 # ==========================================

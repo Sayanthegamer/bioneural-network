@@ -272,9 +272,9 @@ def evaluate_rerankers(facts, statements_emb, queries_emb, cross_encoder_model,
         candidates = topK_indices[q_idx].tolist()
         candidates_20 = top20_indices[q_idx].tolist()
 
-        # --- Oracle@K ---
-        oracle_at_10 = 1 if correct_label in candidates else 0
-        oracle_at_20 = 1 if correct_label in candidates_20 else 0
+        # --- Coverage@K ---
+        coverage_at_10 = 1 if correct_label in candidates else 0
+        coverage_at_20 = 1 if correct_label in candidates_20 else 0
 
         # --- Baseline (prototypical L1, first-stage winner) ---
         baseline_pred = candidates[0]
@@ -310,13 +310,19 @@ def evaluate_rerankers(facts, statements_emb, queries_emb, cross_encoder_model,
         ce_correct_max = 1 if ce_pred_max == correct_label else 0
         ce_correct_mean = 1 if ce_pred_mean == correct_label else 0
 
+        # --- Alias Coverage Ratio ---
+        aliases = query_to_labels[facts[q_idx]["query"]]
+        retrieved_aliases = sum(1 for a in aliases if a in candidates)
+        alias_coverage_ratio = retrieved_aliases / len(aliases)
+
         results.append({
             "query_idx": q_idx,
             "correct_label": correct_label,
             "template_type": template,
             "alias_m": alias_m,
-            "oracle_at_10": oracle_at_10,
-            "oracle_at_20": oracle_at_20,
+            "coverage_at_10": coverage_at_10,
+            "coverage_at_20": coverage_at_20,
+            "alias_coverage_ratio": alias_coverage_ratio,
             "baseline_correct": baseline_correct,
             "token_max_correct": token_correct_max,
             "token_mean_correct": token_correct_mean,
@@ -337,8 +343,9 @@ def aggregate_results(results, N):
     # --- Overall ---
     summary["overall"] = {
         "N": N,
-        "oracle_at_10": np.mean([r["oracle_at_10"] for r in results]),
-        "oracle_at_20": np.mean([r["oracle_at_20"] for r in results]),
+        "coverage_at_10": np.mean([r["coverage_at_10"] for r in results]),
+        "coverage_at_20": np.mean([r["coverage_at_20"] for r in results]),
+        "alias_coverage_ratio": np.mean([r["alias_coverage_ratio"] for r in results]),
         "baseline": np.mean([r["baseline_correct"] for r in results]),
         "token_max": np.mean([r["token_max_correct"] for r in results]),
         "token_mean": np.mean([r["token_mean_correct"] for r in results]),
@@ -354,8 +361,9 @@ def aggregate_results(results, N):
             continue
         summary["per_template"][t] = {
             "count": len(t_results),
-            "oracle_at_10": np.mean([r["oracle_at_10"] for r in t_results]),
-            "oracle_at_20": np.mean([r["oracle_at_20"] for r in t_results]),
+            "coverage_at_10": np.mean([r["coverage_at_10"] for r in t_results]),
+            "coverage_at_20": np.mean([r["coverage_at_20"] for r in t_results]),
+            "alias_coverage_ratio": np.mean([r["alias_coverage_ratio"] for r in t_results]),
             "baseline": np.mean([r["baseline_correct"] for r in t_results]),
             "token_max": np.mean([r["token_max_correct"] for r in t_results]),
             "token_mean": np.mean([r["token_mean_correct"] for r in t_results]),
@@ -376,8 +384,9 @@ def aggregate_results(results, N):
         token_max_recall = np.mean([r["token_max_correct"] for r in m_results])
         summary["per_alias"][m] = {
             "count": len(m_results),
-            "bayes_ceiling": 1.0 / m,
-            "oracle_at_10": np.mean([r["oracle_at_10"] for r in m_results]),
+            "theoretical_bayes_ceiling": 1.0 / m,
+            "coverage_at_10": np.mean([r["coverage_at_10"] for r in m_results]),
+            "alias_coverage_ratio": np.mean([r["alias_coverage_ratio"] for r in m_results]),
             "baseline": baseline_recall,
             "token_max": token_max_recall,
             "ce_max": ce_max_recall,
@@ -397,7 +406,7 @@ def write_csv(results, csv_path, N):
     """Write per-query results to CSV."""
     headers = [
         "N", "query_idx", "correct_label", "template_type", "alias_m",
-        "oracle_at_10", "oracle_at_20",
+        "coverage_at_10", "coverage_at_20", "alias_coverage_ratio",
         "baseline_correct", "token_max_correct", "token_mean_correct",
         "ce_max_correct", "ce_mean_correct"
     ]
@@ -439,9 +448,9 @@ def generate_plots(all_summaries, plot_path):
         vals = [all_summaries[n]["overall"][method] * 100 for n in N_values]
         ax.plot(N_values, vals, 'o-', label=label, color=color, linewidth=2, markersize=6)
 
-    # Oracle line
-    oracle_vals = [all_summaries[n]["overall"]["oracle_at_10"] * 100 for n in N_values]
-    ax.plot(N_values, oracle_vals, 's--', label="Oracle@10", color="#009E73",
+    # Coverage line
+    coverage_vals = [all_summaries[n]["overall"]["coverage_at_10"] * 100 for n in N_values]
+    ax.plot(N_values, coverage_vals, 's--', label="Coverage@10", color="#009E73",
             linewidth=2, markersize=6)
 
     ax.set_xlabel("Number of Classes (N)")
@@ -465,14 +474,14 @@ def generate_plots(all_summaries, plot_path):
                 vals.append(0)
         ax.bar(x_positions + i * bar_width, vals, bar_width, label=label, color=color)
 
-    # Oracle bars
-    oracle_vals_t = []
+    # Coverage bars
+    coverage_vals_t = []
     for t in [0, 1, 2]:
         if t in summary["per_template"]:
-            oracle_vals_t.append(summary["per_template"][t]["oracle_at_10"] * 100)
+            coverage_vals_t.append(summary["per_template"][t]["coverage_at_10"] * 100)
         else:
-            oracle_vals_t.append(0)
-    ax.bar(x_positions + 4 * bar_width, oracle_vals_t, bar_width, label="Oracle@10",
+            coverage_vals_t.append(0)
+    ax.bar(x_positions + 4 * bar_width, coverage_vals_t, bar_width, label="Coverage@10",
            color="#009E73")
 
     ax.set_xticks(x_positions + 2 * bar_width)
@@ -488,16 +497,16 @@ def generate_plots(all_summaries, plot_path):
     if alias_ms:
         baseline_by_m = [summary["per_alias"][m]["baseline"] * 100 for m in alias_ms]
         ce_max_by_m = [summary["per_alias"][m]["ce_max"] * 100 for m in alias_ms]
-        bayes_by_m = [summary["per_alias"][m]["bayes_ceiling"] * 100 for m in alias_ms]
-        oracle_by_m = [summary["per_alias"][m]["oracle_at_10"] * 100 for m in alias_ms]
+        bayes_by_m = [summary["per_alias"][m]["theoretical_bayes_ceiling"] * 100 for m in alias_ms]
+        coverage_by_m = [summary["per_alias"][m]["coverage_at_10"] * 100 for m in alias_ms]
 
         ax.plot(alias_ms, baseline_by_m, 'o-', label="Baseline", color="#555555",
                 linewidth=2, markersize=6)
         ax.plot(alias_ms, ce_max_by_m, 's-', label="CE-Max", color="#0072B2",
                 linewidth=2, markersize=6)
-        ax.plot(alias_ms, bayes_by_m, 'x--', label="Bayes Ceiling (1/M)", color="#CC79A7",
+        ax.plot(alias_ms, bayes_by_m, 'x--', label="Theoretical Bayes Ceiling (1/M)", color="#CC79A7",
                 linewidth=2, markersize=8)
-        ax.plot(alias_ms, oracle_by_m, 'd--', label="Oracle@10", color="#009E73",
+        ax.plot(alias_ms, coverage_by_m, 'd--', label="Coverage@10", color="#009E73",
                 linewidth=2, markersize=6)
 
         ax.set_xlabel("Alias Cardinality (M)")
@@ -526,23 +535,23 @@ def generate_plots(all_summaries, plot_path):
         ax.axhline(y=0, color='black', linewidth=0.5)
         ax.grid(True, alpha=0.3, axis='y')
 
-    # --- Plot 5: Oracle@K per Template ---
+    # --- Plot 5: Coverage@K per Template ---
     ax = axes[1, 1]
     if summary["per_template"]:
         templates = [0, 1, 2]
-        oracle_10_vals = [summary["per_template"].get(t, {}).get("oracle_at_10", 0) * 100
+        coverage_10_vals = [summary["per_template"].get(t, {}).get("coverage_at_10", 0) * 100
                           for t in templates]
-        oracle_20_vals = [summary["per_template"].get(t, {}).get("oracle_at_20", 0) * 100
+        coverage_20_vals = [summary["per_template"].get(t, {}).get("coverage_at_20", 0) * 100
                           for t in templates]
 
         x_pos = np.arange(3)
-        ax.bar(x_pos - 0.15, oracle_10_vals, 0.3, label="Oracle@10", color="#009E73")
-        ax.bar(x_pos + 0.15, oracle_20_vals, 0.3, label="Oracle@20", color="#56B4E9")
+        ax.bar(x_pos - 0.15, coverage_10_vals, 0.3, label="Coverage@10", color="#009E73")
+        ax.bar(x_pos + 0.15, coverage_20_vals, 0.3, label="Coverage@20", color="#56B4E9")
 
         ax.set_xticks(x_pos)
         ax.set_xticklabels([template_names[t] for t in templates], fontsize=8)
         ax.set_ylabel("Coverage (%)")
-        ax.set_title(f"Oracle@K by Template (N={largest_N})")
+        ax.set_title(f"Coverage@K by Template (N={largest_N})")
         ax.legend(fontsize=8)
         ax.set_ylim(90, 101)
         ax.grid(True, alpha=0.3, axis='y')
@@ -580,11 +589,12 @@ def generate_report(all_summaries, md_path):
 
     # Overall table
     lines.append("## 1. Overall Results\n")
-    lines.append("| N | Oracle@10 | Oracle@20 | Baseline | Token-Max | CE-Max | CE-Mean |")
-    lines.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| N | Coverage@10 | Coverage@20 | Alias Coverage Ratio | Baseline | Token-Max | CE-Max | CE-Mean |")
+    lines.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     for n in sorted(all_summaries.keys()):
         s = all_summaries[n]["overall"]
-        lines.append(f"| {n} | {s['oracle_at_10']*100:.1f}% | {s['oracle_at_20']*100:.1f}% | "
+        lines.append(f"| {n} | {s['coverage_at_10']*100:.1f}% | {s['coverage_at_20']*100:.1f}% | "
+                      f"{s['alias_coverage_ratio']*100:.1f}% | "
                       f"{s['baseline']*100:.1f}% | {s['token_max']*100:.1f}% | "
                       f"{s['ce_max']*100:.1f}% | {s['ce_mean']*100:.1f}% |")
     lines.append("")
@@ -593,12 +603,13 @@ def generate_report(all_summaries, md_path):
     lines.append("## 2. Per-Template Results (N={})".format(largest_N))
     lines.append("")
     template_names = {0: "T0: Access Codes", 1: "T1: Folders/Projects", 2: "T2: Meetings"}
-    lines.append("| Template | Count | Oracle@10 | Baseline | Token-Max | CE-Max | CE-Mean |")
-    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| Template | Count | Coverage@10 | Alias Coverage Ratio | Baseline | Token-Max | CE-Max | CE-Mean |")
+    lines.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     for t in [0, 1, 2]:
         if t in summary["per_template"]:
             s = summary["per_template"][t]
-            lines.append(f"| {template_names[t]} | {s['count']} | {s['oracle_at_10']*100:.1f}% | "
+            lines.append(f"| {template_names[t]} | {s['count']} | {s['coverage_at_10']*100:.1f}% | "
+                          f"{s['alias_coverage_ratio']*100:.1f}% | "
                           f"{s['baseline']*100:.1f}% | {s['token_max']*100:.1f}% | "
                           f"{s['ce_max']*100:.1f}% | {s['ce_mean']*100:.1f}% |")
     lines.append("")
@@ -606,23 +617,23 @@ def generate_report(all_summaries, md_path):
     # Alias cardinality table
     lines.append("## 3. Recall vs Alias Cardinality (N={})".format(largest_N))
     lines.append("")
-    lines.append("| M | Count | Bayes Ceiling | Oracle@10 | Baseline | CE-Max | Δ CE-Max | Δ Token-Max |")
-    lines.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| M | Count | Theoretical Bayes Ceiling | Coverage@10 | Alias Coverage Ratio | Baseline | CE-Max | Δ CE-Max | Δ Token-Max |")
+    lines.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     for m in sorted(summary["per_alias"].keys()):
         s = summary["per_alias"][m]
-        lines.append(f"| {m} | {s['count']} | {s['bayes_ceiling']*100:.1f}% | "
-                      f"{s['oracle_at_10']*100:.1f}% | {s['baseline']*100:.1f}% | "
-                      f"{s['ce_max']*100:.1f}% | {s['delta_ce_max']*100:+.1f}pp | "
+        lines.append(f"| {m} | {s['count']} | {s['theoretical_bayes_ceiling']*100:.1f}% | "
+                      f"{s['coverage_at_10']*100:.1f}% | {s['alias_coverage_ratio']*100:.1f}% | "
+                      f"{s['baseline']*100:.1f}% | {s['ce_max']*100:.1f}% | {s['delta_ce_max']*100:+.1f}pp | "
                       f"{s['delta_token_max']*100:+.1f}pp |")
     lines.append("")
 
     # Error decomposition
     lines.append("## 4. Error Decomposition (N={})".format(largest_N))
     lines.append("")
-    oracle = summary["overall"]["oracle_at_10"]
+    coverage = summary["overall"]["coverage_at_10"]
     ce_max_recall = summary["overall"]["ce_max"]
-    lines.append(f"- **Retrieval Error** = 100% - Oracle@10 = {(1.0 - oracle)*100:.1f}%")
-    lines.append(f"- **Selection Error** = Oracle@10 - CE-Max Recall = {(oracle - ce_max_recall)*100:.1f}%")
+    lines.append(f"- **Retrieval Error** = 100% - Coverage@10 = {(1.0 - coverage)*100:.1f}%")
+    lines.append(f"- **Selection Error** = Coverage@10 - CE-Max Recall = {(coverage - ce_max_recall)*100:.1f}%")
     lines.append(f"- **Total Error** = 100% - CE-Max Recall = {(1.0 - ce_max_recall)*100:.1f}%")
     lines.append("")
 
@@ -713,8 +724,9 @@ def main():
         s = summary["overall"]
         elapsed = time.time() - t0
         print(f"\n  --- Results for N={N} (took {elapsed:.1f}s) ---")
-        print(f"  Oracle@10:     {s['oracle_at_10']*100:.1f}%")
-        print(f"  Oracle@20:     {s['oracle_at_20']*100:.1f}%")
+        print(f"  Coverage@10:   {s['coverage_at_10']*100:.1f}%")
+        print(f"  Coverage@20:   {s['coverage_at_20']*100:.1f}%")
+        print(f"  Alias Coverage: {s['alias_coverage_ratio']*100:.1f}%")
         print(f"  Baseline:      {s['baseline']*100:.1f}%")
         print(f"  Token-Max:     {s['token_max']*100:.1f}%")
         print(f"  Token-Mean:    {s['token_mean']*100:.1f}%")
@@ -726,15 +738,16 @@ def main():
         for t in [0, 1, 2]:
             if t in summary["per_template"]:
                 ts = summary["per_template"][t]
-                print(f"    {template_names[t]:16s} | Oracle@10={ts['oracle_at_10']*100:.1f}% "
-                      f"| Base={ts['baseline']*100:.1f}% | CE-Max={ts['ce_max']*100:.1f}%")
+                print(f"    {template_names[t]:16s} | Coverage@10={ts['coverage_at_10']*100:.1f}% "
+                      f"| Alias Cov={ts['alias_coverage_ratio']*100:.1f}% | Base={ts['baseline']*100:.1f}% | CE-Max={ts['ce_max']*100:.1f}%")
 
         print(f"\n  Alias Cardinality:")
         for m in sorted(summary["per_alias"].keys()):
             ms = summary["per_alias"][m]
             print(f"    M={m:2d} ({ms['count']:3d} queries) | "
-                  f"Bayes={ms['bayes_ceiling']*100:.1f}% | Base={ms['baseline']*100:.1f}% | "
-                  f"CE-Max={ms['ce_max']*100:.1f}% | Δ={ms['delta_ce_max']*100:+.1f}pp")
+                  f"Theoretical Bayes={ms['theoretical_bayes_ceiling']*100:.1f}% | Coverage@10={ms['coverage_at_10']*100:.1f}% | "
+                  f"Alias Cov={ms['alias_coverage_ratio']*100:.1f}% | Base={ms['baseline']*100:.1f}% | "
+                  f"CE-Max={ms['ce_max']*100:.1f}% | D={ms['delta_ce_max']*100:+.1f}pp")
 
     # Generate plots and report
     print(f"\n[*] Generating plots...")

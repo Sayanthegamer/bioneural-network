@@ -7,7 +7,7 @@ import numpy as np
 import random
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 
 from mnc.layers import MNCLinear
 from mnc.memory import MESUEngine
@@ -233,4 +233,4 @@ def run_drift_analysis(seeds, csv_path):
 
 if __name__ == "__main__":
     seeds = [42, 101, 202, 303, 404, 505, 606, 707, 808, 909]
-    run_drift_analysis(seeds, "experiments/results/drift_analysis.csv")
+    run_drift_analysis(seeds, "experiments/results/diagnostic_telemetry/drift_analysis.csv")

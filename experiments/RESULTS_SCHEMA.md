@@ -1,6 +1,6 @@
 # MESU Experiment Telemetry Schema
 
-To ensure all stress-testing experiments output compatible, machine-parseable data for comparison and plotting, every run must log its results to `experiments/results/` as a row in a standardized CSV document matching this schema:
+To ensure all stress-testing experiments output compatible, machine-parseable data for comparison and plotting, every run must log its results to `experiments/results/` subfolders as a row in a standardized CSV document matching this schema:
 
 | Column | Type | Description |
 | :--- | :---: | :--- |

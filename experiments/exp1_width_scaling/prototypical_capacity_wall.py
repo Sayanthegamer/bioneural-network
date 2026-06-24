@@ -8,7 +8,7 @@ import numpy as np
 import random
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 
 from mnc.layers import MNCLinear, MNCPrototypicalNetwork
 from pipeline import JournalPipeline
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     results_dir = os.path.join(script_dir, "results")
     os.makedirs(results_dir, exist_ok=True)
-    csv_path = os.path.join(results_dir, "prototypical_capacity.csv")
+    csv_path = os.path.join(results_dir, "experiment_1_width_scaling/prototypical_capacity.csv")
     
     if os.path.exists(csv_path):
         os.remove(csv_path)

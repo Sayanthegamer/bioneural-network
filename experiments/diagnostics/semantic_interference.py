@@ -7,7 +7,7 @@ import numpy as np
 import random
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 
 from mnc.layers import MNCLinear
 from mnc.memory import MESUEngine
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     print("====================================================")
     
     seeds = [42, 101, 202, 303, 404, 505, 606, 707, 808, 909]
-    results_dir = os.path.join(os.path.dirname(__file__), 'results')
+    results_dir = os.path.join(os.path.dirname(__file__), 'results/diagnostic_telemetry')
     os.makedirs(results_dir, exist_ok=True)
     
     csv_path = os.path.join(results_dir, 'semantic_interference.csv')

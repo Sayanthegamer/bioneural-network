@@ -8,7 +8,7 @@ import numpy as np
 import random
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 
 from mnc.layers import MNCLinear
 from mnc.memory import MESUEngine
@@ -222,7 +222,7 @@ def run_capacity_evaluation(num_facts, seeds, csv_path):
 
 if __name__ == "__main__":
     seeds = [42, 101, 202, 303, 404, 505, 606, 707, 808, 909]
-    csv_path = "experiments/results/capacity_wall.csv"
+    csv_path = "experiments/results/experiment_1_width_scaling/capacity_wall.csv"
     
     # Remove existing capacity_wall.csv if it exists to start fresh
     if os.path.exists(csv_path):

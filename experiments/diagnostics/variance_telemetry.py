@@ -7,7 +7,7 @@ import numpy as np
 import random
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 
 from mnc.layers import MNCLinear
 from mnc.memory import MESUEngine
@@ -64,7 +64,7 @@ def run_variance_telemetry_sweep(seed=42):
     set_seed(seed)
     pipeline = JournalPipeline()
     
-    results_dir = os.path.join(os.path.dirname(__file__), 'results')
+    results_dir = os.path.join(os.path.dirname(__file__), 'results/diagnostic_telemetry')
     os.makedirs(results_dir, exist_ok=True)
     csv_path = os.path.join(results_dir, 'variance_telemetry.csv')
     

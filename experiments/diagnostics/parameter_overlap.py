@@ -7,7 +7,7 @@ import numpy as np
 import random
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 
 from mnc.layers import MNCLinear
 from pipeline import JournalPipeline
@@ -130,7 +130,7 @@ def run_parameter_overlap(seed=42):
             matrix_l3[r, c] = cosine_similarity(gradients_l3[r], gradients_l3[c])
             
     # 4. Save results to CSV
-    results_dir = os.path.join(os.path.dirname(__file__), 'results')
+    results_dir = os.path.join(os.path.dirname(__file__), 'results/diagnostic_telemetry')
     os.makedirs(results_dir, exist_ok=True)
     csv_path = os.path.join(results_dir, 'parameter_overlap.csv')
     

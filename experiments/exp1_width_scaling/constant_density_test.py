@@ -8,7 +8,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 from mnc.layers import MNCLinear, MNCPrototypicalNetwork
 from pipeline import JournalPipeline
 
@@ -72,7 +72,7 @@ def main():
     widths = [32, 64, 128, 256, 512]
     ratios = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
     
-    results_dir = "experiments/results"
+    results_dir = "experiments/results/experiment_1_width_scaling"
     os.makedirs(results_dir, exist_ok=True)
     csv_path = os.path.join(results_dir, "constant_density_test.csv")
     

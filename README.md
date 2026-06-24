@@ -129,7 +129,7 @@ Here are the key experimental results plotted from the sweeps:
 #### 1. Width-Scaling & Power-Law Fits (`width_scaling_plots.png`)
 Shows recall accuracy scaling as a function of the number of facts ($N$) for different bottleneck widths, alongside their log-log power-law fits ($\text{Recall}(N) = A / N^\alpha$):
 
-![Width Scaling Plots](experiments/results/width_scaling_plots.png)
+![Width Scaling Plots](experiments/results/experiment_1_width_scaling/width_scaling_plots.png)
 
 #### 2. Parametric Study: Retention Curves & Geometry Heatmap
 *   **Left (retention_plots.png)**: Evaluates fact recall decay over a 10-day timeline for different algorithms (KNN, MESU, SGD, Offline baselines).
@@ -137,7 +137,7 @@ Shows recall accuracy scaling as a function of the number of facts ($N$) for dif
 
 | Online Retention Curves over 10-Day Horizon | Bottleneck Geometry & Cosine Similarity Heatmap |
 | :---: | :---: |
-| ![Retention Curves](experiments/results/retention_plots.png) | ![Geometry Heatmap](experiments/results/geometry_heatmap.png) |
+| ![Retention Curves](experiments/results/diagnostic_telemetry/retention_plots.png) | ![Geometry Heatmap](experiments/results/diagnostic_telemetry/geometry_heatmap.png) |
 
 ---
 

@@ -27,7 +27,7 @@ from collections import Counter, defaultdict
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 
 # ==============================================================================
 # 1. REPRODUCIBILITY

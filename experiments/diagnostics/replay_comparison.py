@@ -8,7 +8,7 @@ import numpy as np
 import random
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 
 from mnc.layers import MNCLinear
 from mnc.memory import MESUEngine
@@ -244,7 +244,7 @@ def run_replay_experiment(method, buffer_size, seeds, csv_path, num_facts=50):
 
 if __name__ == "__main__":
     seeds = [42, 101, 202, 303, 404]
-    csv_path = "experiments/results/replay_comparison.csv"
+    csv_path = "experiments/results/diagnostic_telemetry/replay_comparison.csv"
     
     # Remove existing replay_comparison.csv if it exists to start fresh
     if os.path.exists(csv_path):

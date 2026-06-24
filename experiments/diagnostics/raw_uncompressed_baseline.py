@@ -7,7 +7,7 @@ import random
 from sentence_transformers import SentenceTransformer
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 from pipeline import JournalPipeline
 
 def set_seed(seed):

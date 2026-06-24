@@ -9,7 +9,7 @@ import random
 import matplotlib.pyplot as plt
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 
 from mnc.layers import MNCLinear
 from mnc.memory import MESUEngine
@@ -188,7 +188,7 @@ def main():
     widths = [32, 64, 128, 256]
     capacity_steps = [5, 10, 20, 50, 100, 200, 400, 800]
     
-    results_dir = "experiments/results"
+    results_dir = "experiments/results/experiment_1_width_scaling"
     os.makedirs(results_dir, exist_ok=True)
     csv_path = os.path.join(results_dir, "width_scaling.csv")
     

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from sentence_transformers import SentenceTransformer
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 from mnc.layers import MNCLinear
 from pipeline import JournalPipeline
 
@@ -201,8 +201,8 @@ def main():
         {"name": "proj_256d", "dim": 256, "project": True}
     ]
     
-    results_dir = "experiments/results"
-    logs_dir = "experiments/results/logs"
+    results_dir = "experiments/results/experiment_2_prototype_assumption"
+    logs_dir = "experiments/results/diagnostic_telemetry/logs"
     os.makedirs(logs_dir, exist_ok=True)
     
     csv_path = os.path.join(results_dir, "break_prototype_assumption.csv")

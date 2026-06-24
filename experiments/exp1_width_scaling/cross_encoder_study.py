@@ -9,7 +9,7 @@ import random
 import matplotlib.pyplot as plt
 from sentence_transformers import SentenceTransformer
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 from mnc.layers import MNCLinear, MNCPrototypicalNetwork
 
 def set_seed(seed):
@@ -79,7 +79,7 @@ def main():
     ratio = 4.0
     seeds = [42, 101, 202]
     
-    results_dir = "experiments/results"
+    results_dir = "experiments/results/experiment_1_width_scaling"
     os.makedirs(results_dir, exist_ok=True)
     csv_path = os.path.join(results_dir, "cross_encoder_study.csv")
     

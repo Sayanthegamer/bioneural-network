@@ -894,7 +894,7 @@ def run_sweep_retention():
         
     # Export to CSV
     os.makedirs("experiments/results", exist_ok=True)
-    csv_file = "experiments/results/retention_curves.csv"
+    csv_file = "experiments/results/diagnostic_telemetry/retention_curves.csv"
     with open(csv_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["model", "checkpoint", "seed", "probe_recall", "current_recall"])
         writer.writeheader()
@@ -928,7 +928,7 @@ def run_sweep_retention():
     plt.ylim(-5, 105)
     plt.legend(loc="lower left", bbox_to_anchor=(0.0, 0.0), ncol=2, fontsize="small")
     plt.tight_layout()
-    plot_file = "experiments/results/retention_plots.png"
+    plot_file = "experiments/results/diagnostic_telemetry/retention_plots.png"
     plt.savefig(plot_file, dpi=150)
     plt.close()
     print(f"Generated retention plots at {plot_file}")
@@ -1260,7 +1260,7 @@ def run_sweep_geometry():
             axs[1].text(j, i, f"{val:.3f}", ha="center", va="center", color="white" if val < np.mean(matrix_margin) else "black", fontweight="bold")
             
     plt.tight_layout()
-    heatmap_file = "experiments/results/geometry_heatmap.png"
+    heatmap_file = "experiments/results/diagnostic_telemetry/geometry_heatmap.png"
     plt.savefig(heatmap_file, dpi=150)
     plt.close()
     print(f"\nSaved geometric heatmaps to {heatmap_file}")
@@ -1279,7 +1279,7 @@ def main():
     )
     args = parser.parse_args()
     
-    log_dir = "experiments/results/logs"
+    log_dir = "experiments/results/diagnostic_telemetry/logs"
     os.makedirs(log_dir, exist_ok=True)
     
     # Configure dual logger

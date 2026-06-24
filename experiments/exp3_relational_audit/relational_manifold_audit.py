@@ -12,7 +12,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression, RidgeClassifier
 
 # Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'mnc_project'))
 from mnc.layers import MNCLinear
 from pipeline import JournalPipeline
 
@@ -326,8 +326,8 @@ def main():
         "bge-small-en-v1.5": "BAAI/bge-small-en-v1.5"
     }
     
-    results_dir = "experiments/results"
-    logs_dir = "experiments/results/logs"
+    results_dir = "experiments/results/experiment_3_relational_audit"
+    logs_dir = "experiments/results/diagnostic_telemetry/logs"
     os.makedirs(logs_dir, exist_ok=True)
     
     csv_path = os.path.join(results_dir, "relational_manifold_audit.csv")

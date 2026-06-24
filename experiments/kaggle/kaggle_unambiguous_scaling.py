@@ -88,7 +88,7 @@ def generate_unambiguous_facts(N):
         "Donna", "Michelle", "Carol", "Amanda", "Melissa", "Deborah", "Stephanie", "Rebecca", "Sharon", "Laura",
         "Cynthia", "Kathleen", "Amy", "Shirley", "Angela", "Helen", "Anna", "Brenda", "Pamela", "Nicole",
         "Samantha", "Katherine", "Christine", "Debra", "Rachel", "Carolyn", "Janet", "Catherine", "Maria", "Heather",
-        "Diane", "Ruth", "Julie", "Olive", "Jack", "Harry", "Albert", "Arthur", "Walter", "Fred"
+        "Diane", "Ruth", "Julie", "Olive", "Jack", "Jacky", "Harry", "Albert", "Arthur", "Walter", "Fred"
     ][:100] # 100
 
     sess_adjs = ["daily", "weekly", "monthly", "quarterly", "annual", "interactive", "collaborative", "urgent", "informal", "formal"]
@@ -183,7 +183,7 @@ def evaluate_projection(statements_emb, queries_emb, facts, projection_type, W=N
     elif projection_type == "random":
         centroids = centroids_384 @ R.T
         queries = queries_emb @ R.T
-    elif projection_type == "svd":
+    elif projection_type == "oracle_svd":
         centroids = (centroids_384 - statements_mean) @ V_W.T
         queries = (queries_emb - statements_mean) @ V_W.T
     
@@ -197,6 +197,7 @@ def evaluate_projection(statements_emb, queries_emb, facts, projection_type, W=N
     margins = []
     gap_ratios = []
     prototype_densities = []
+    decision_gaps = []
     
     recall_at_1 = 0
     recall_at_5 = 0
@@ -233,6 +234,11 @@ def evaluate_projection(statements_emb, queries_emb, facts, projection_type, W=N
         sorted_dists = dists[q_idx].sort()[0]
         density = sorted_dists[:min(10, N)].mean().item()
         prototype_densities.append(density)
+
+        # decision gap: top2_dist - top1_dist
+        top1_dist = sorted_dists[0].item()
+        top2_dist = sorted_dists[1].item() if N > 1 else top1_dist
+        decision_gaps.append(top2_dist - top1_dist)
         
     return {
         "recall_at_1": recall_at_1 / N,
@@ -248,7 +254,10 @@ def evaluate_projection(statements_emb, queries_emb, facts, projection_type, W=N
         "p10_gap_ratio": float(np.percentile(gap_ratios, 10)),
         "mean_prototype_density": float(np.mean(prototype_densities)),
         "p5_prototype_density": float(np.percentile(prototype_densities, 5)),
-        "p10_prototype_density": float(np.percentile(prototype_densities, 10))
+        "p10_prototype_density": float(np.percentile(prototype_densities, 10)),
+        "mean_decision_gap": float(np.mean(decision_gaps)),
+        "p5_decision_gap": float(np.percentile(decision_gaps, 5)),
+        "p10_decision_gap": float(np.percentile(decision_gaps, 10))
     }
 
 # ==============================================================================
@@ -269,20 +278,26 @@ def generate_report(results_by_N, md_path, capacity_breakpoints):
     lines.append("\n")
 
     lines.append("> [!IMPORTANT]")
-    lines.append("> **SVD Data Leakage Disclaimer:** The SVD projection matrix is computed based on the same statement corpus being retrieved.")
-    lines.append("> Therefore, SVD results serve as an upper-bound representational ceiling rather than a realistic deployment scenario.\n")
+    lines.append("> **Oracle-SVD Data Leakage Disclaimer:** The Oracle-SVD projection matrix is computed based on the same statement corpus being retrieved.")
+    lines.append("> Therefore, Oracle-SVD results serve as an upper-bound representational ceiling rather than a realistic deployment scenario.\n")
 
     lines.append("## Detailed Sweep Results\n")
-    lines.append("| N | Projection | Width (W) | Recall@1 | Recall@10 | Mean Rank | p5 Margin | Mean Gap Ratio | Mean Density |")
-    lines.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| N | Projection | Width (W) | Recall@1 | Recall@10 | Mean Rank | p5 Margin | Mean Gap Ratio | Mean Decision Gap | Mean Density |")
+    lines.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     
     for N in sorted(results_by_N.keys()):
         for config in results_by_N[N]:
             r = config["results"]
             w_str = str(config["W"]) if config["W"] is not None else "-"
-            lines.append(f"| {N} | {config['type']} | {w_str} | {r['recall_at_1']*100:.1f}% | "
+            
+            if "std_recall_at_1" in r and r["std_recall_at_1"] > 0:
+                recall_str = f"{r['recall_at_1']*100:.1f}% ± {r['std_recall_at_1']*100:.1f}%"
+            else:
+                recall_str = f"{r['recall_at_1']*100:.1f}%"
+                
+            lines.append(f"| {N} | {config['type']} | {w_str} | {recall_str} | "
                          f"{r['recall_at_10']*100:.1f}% | {r['mean_rank']:.1f} | {r['p5_margin']:.2f} | "
-                         f"{r['mean_gap_ratio']:.2f} | {r['mean_prototype_density']:.2f} |")
+                         f"{r['mean_gap_ratio']:.2f} | {r['mean_decision_gap']:.2f} | {r['mean_prototype_density']:.2f} |")
             
     with open(md_path, 'w', encoding='utf-8') as f:
         f.write("\n".join(lines))
@@ -300,9 +315,9 @@ def generate_plots(results_by_N, plot_path):
         ("random", 32, "Random (W=32)", "red", "s"),
         ("random", 64, "Random (W=64)", "orange", "^"),
         ("random", 128, "Random (W=128)", "yellow", "v"),
-        ("svd", 32, "SVD (W=32)", "blue", "D"),
-        ("svd", 64, "SVD (W=64)", "teal", "p"),
-        ("svd", 128, "SVD (W=128)", "green", "*"),
+        ("oracle_svd", 32, "Oracle-SVD (W=32)", "blue", "D"),
+        ("oracle_svd", 64, "Oracle-SVD (W=64)", "teal", "p"),
+        ("oracle_svd", 128, "Oracle-SVD (W=128)", "green", "*"),
     ]
     
     # Plot 1: Recall@1 vs N
@@ -341,21 +356,21 @@ def generate_plots(results_by_N, plot_path):
     ax.axhline(y=0, color='red', linestyle='--', linewidth=0.8)
     ax.grid(True, alpha=0.3)
     
-    # Plot 3: Mean Prototype Density vs N
+    # Plot 3: Mean Decision Gap vs N
     ax = axes[2]
     for p_type, W, label, color, marker in series_configs:
         vals = []
         for N in N_vals:
             for cfg in results_by_N[N]:
                 if cfg["type"] == p_type and cfg["W"] == W:
-                    vals.append(cfg["results"]["mean_prototype_density"])
+                    vals.append(cfg["results"]["mean_decision_gap"])
         ax.plot(N_vals, vals, marker + '-', label=label, color=color)
     ax.set_xscale('log')
     ax.set_xticks(N_vals)
     ax.set_xticklabels([str(n) for n in N_vals])
     ax.set_xlabel("Number of Facts (N)")
-    ax.set_ylabel("Mean Prototype Density")
-    ax.set_title("Mean Prototype Density vs N")
+    ax.set_ylabel("Mean Decision Gap")
+    ax.set_title("Mean Decision Gap vs N")
     ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
@@ -370,7 +385,7 @@ def generate_plots(results_by_N, plot_path):
 def main():
     parser = argparse.ArgumentParser(description="Experiment 5: Unambiguous Schema Scaling (Kaggle)")
     parser.add_argument("--N_max", type=int, default=3200, help="Maximum N to evaluate")
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
     
     set_seed(42)
     
@@ -433,25 +448,36 @@ def main():
         # 1. Raw
         print("  [*] Evaluating Raw 384D...")
         raw_res = evaluate_projection(statements_emb_cpu, queries_emb_cpu, facts, "raw")
+        raw_res["std_recall_at_1"] = 0.0
         configs_evaluated.append({"type": "raw", "W": None, "results": raw_res})
         
         for W in widths:
-            # 2. Random projection
-            print(f"  [*] Evaluating Random (W={W})...")
-            gen_state = torch.random.get_rng_state()
-            torch.manual_seed(12345 + W)
-            R = torch.randn(W, 384)
-            R = R / torch.linalg.norm(R, dim=1, keepdim=True)
-            torch.random.set_rng_state(gen_state)
-            
-            rand_res = evaluate_projection(statements_emb_cpu, queries_emb_cpu, facts, "random", W=W, R=R)
+            # 2. Random projection (evaluated across seeds 42, 101, 202)
+            print(f"  [*] Evaluating Random (W={W}) across 3 seeds...")
+            rand_res_list = []
+            for seed in [42, 101, 202]:
+                gen_state = torch.random.get_rng_state()
+                torch.manual_seed(seed + W)
+                R = torch.randn(W, 384)
+                R = R / torch.linalg.norm(R, dim=1, keepdim=True)
+                torch.random.set_rng_state(gen_state)
+                
+                res = evaluate_projection(statements_emb_cpu, queries_emb_cpu, facts, "random", W=W, R=R)
+                rand_res_list.append(res)
+                
+            rand_res = {}
+            for key in rand_res_list[0].keys():
+                vals = [r[key] for r in rand_res_list]
+                rand_res[key] = float(np.mean(vals))
+            rand_res["std_recall_at_1"] = float(np.std([r["recall_at_1"] for r in rand_res_list]))
             configs_evaluated.append({"type": "random", "W": W, "results": rand_res})
             
-            # 3. SVD projection
-            print(f"  [*] Evaluating SVD (W={W})...")
+            # 3. Oracle-SVD projection
+            print(f"  [*] Evaluating Oracle-SVD (W={W})...")
             V_W = Vh[:W]
-            svd_res = evaluate_projection(statements_emb_cpu, queries_emb_cpu, facts, "svd", W=W, statements_mean=statements_mean, V_W=V_W)
-            configs_evaluated.append({"type": "svd", "W": W, "results": svd_res})
+            svd_res = evaluate_projection(statements_emb_cpu, queries_emb_cpu, facts, "oracle_svd", W=W, statements_mean=statements_mean, V_W=V_W)
+            svd_res["std_recall_at_1"] = 0.0
+            configs_evaluated.append({"type": "oracle_svd", "W": W, "results": svd_res})
             
         results_by_N[N] = configs_evaluated
         
@@ -470,12 +496,12 @@ def main():
     # Calculate Capacity Breakdown Point N* for each type
     capacity_breakpoints = {}
     
-    keys = ["Raw (384D)", "Random (W=32)", "Random (W=64)", "Random (W=128)", "SVD (W=32)", "SVD (W=64)", "SVD (W=128)"]
+    keys = ["Raw (384D)", "Random (W=32)", "Random (W=64)", "Random (W=128)", "Oracle-SVD (W=32)", "Oracle-SVD (W=64)", "Oracle-SVD (W=128)"]
     for key in keys:
         if "Raw" in key:
             ptype, W = "raw", None
         else:
-            ptype = "random" if "Random" in key else "svd"
+            ptype = "random" if "Random" in key else "oracle_svd"
             W = int(key.split("=")[1].replace(")", ""))
             
         n_star = "< 100"

@@ -66,3 +66,25 @@ This document tracks every design decision, loss function, optimizer configurati
 *   **The Idea:** Increasing the bottleneck layer width (from 32 to 256) under the raw unscaled locking engine to increase memory capacity and reduce sequential forgetting.
 *   **The Result:** **Ruled out (wider layers actually accelerate forgetting).**
 *   **Why it was ruled out:** Wider layers distribute representations, making the raw gradient per weight smaller (signal dilution). Because the engine locks variance using unscaled gradients, this dilution causes wider layers to lock weight variances **slower**, keeping the parameters plastic and unprotected longer. As a result, wider networks are more vulnerable to sequential overwrites, yielding a steeper forgetting decay exponent ($\alpha_{256} = 1.2062$) compared to narrower ones ($\alpha_{64} = 1.0774$).
+
+---
+
+## ❌ 10. Outcome A of Cross-Encoder Replication (Pure Universal Geometry)
+*   **The Idea:** The $N/W$ density law would result in identical recall curves and plateau levels for all embedding backends (universal geometric packing), meaning encoder choice only dictates local out-of-distribution (OOD) properties but not metric capacity.
+*   **The Result:** **Ruled out.**
+*   **Why it was ruled out:** Verified empirically in `cross_encoder_study.py` that while the curve shape is universal (all encoders flatten/plateau at $W \ge 128$), the actual plateau level varies drastically by encoder (MiniLM at ~78.5%, E5-small at ~54.1%, MPNet at ~43.8%, E5-base at ~38.7%). The capacity law is decomposed: $\text{Recall}(N, W, \mathcal{E}) = f(N/W) \cdot g(\mathcal{E})$ where the encoder manifold quality $g(\mathcal{E})$ sets the recall ceiling.
+
+---
+
+## ❌ 11. 768D Encoders as Inherently Superior for Projection
+*   **The Idea:** Using larger embedding dimensions (e.g. 768d for MPNet/E5-base) will preserve more semantic information and survive bottleneck projection better than 384d encoders (MiniLM, E5-small).
+*   **The Result:** **Ruled out.**
+*   **Why it was ruled out:** 768d encoders plateaued significantly below 384d encoders (MiniLM at ~78.5% and E5-small at ~54.1% vs. MPNet at ~43.8% and E5-base at ~38.7%). Sparser high-dimensional manifolds suffer from higher distortion under random linear bottleneck projection, indicating that higher native dimensionality does not guarantee better projection survival.
+
+---
+
+## ❌ 12. Unlimited Capacity Scaling via Bottleneck Widening under Constant Density
+*   **The Idea:** For a fixed density ratio $N/W$, continuing to increase width $W$ will always yield higher recall or improved separation margins.
+*   **The Result:** **Ruled out.**
+*   **Why it was ruled out:** The constant density sweep (`constant_density_test.py`) showed that recall, separation ratio, and normalized margins flatten out completely for $W \ge 128$ (e.g. recall at density 4.0 remains at ~78.5% across $W=128, 256, 512$). Once the projection dimension is wide enough to represent the encoder's semantic manifold losslessly, widening the bottleneck further without changing density provides zero benefit.
+

@@ -180,6 +180,8 @@ def evaluate_projection(statements_emb, queries_emb, facts, projection_type, W=N
     margins = []
     gap_ratios = []
     prototype_densities = []
+    top1_dists = []
+    top2_dists = []
     decision_gaps = []
     
     recall_at_1 = 0
@@ -221,6 +223,8 @@ def evaluate_projection(statements_emb, queries_emb, facts, projection_type, W=N
         # decision gap: top2_dist - top1_dist
         top1_dist = sorted_dists[0].item()
         top2_dist = sorted_dists[1].item() if N > 1 else top1_dist
+        top1_dists.append(top1_dist)
+        top2_dists.append(top2_dist)
         decision_gaps.append(top2_dist - top1_dist)
         
     return {
@@ -238,6 +242,8 @@ def evaluate_projection(statements_emb, queries_emb, facts, projection_type, W=N
         "mean_prototype_density": float(np.mean(prototype_densities)),
         "p5_prototype_density": float(np.percentile(prototype_densities, 5)),
         "p10_prototype_density": float(np.percentile(prototype_densities, 10)),
+        "mean_top1_dist": float(np.mean(top1_dists)),
+        "mean_top2_dist": float(np.mean(top2_dists)),
         "mean_decision_gap": float(np.mean(decision_gaps)),
         "p5_decision_gap": float(np.percentile(decision_gaps, 5)),
         "p10_decision_gap": float(np.percentile(decision_gaps, 10))
@@ -265,13 +271,20 @@ def generate_report(results_by_N, md_path, capacity_breakpoints):
     lines.append("> Therefore, Oracle-SVD results serve as an upper-bound representational ceiling rather than a realistic deployment scenario.\n")
 
     lines.append("## Detailed Sweep Results\n")
-    lines.append("| N | Projection | Width (W) | Recall@1 | Recall@10 | Mean Rank | p5 Margin | Mean Gap Ratio | Mean Decision Gap | Mean Density |")
-    lines.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+    lines.append("| N | Projection | Width (W) | Recall@1 | Recall@10 | Mean Rank | p5 Margin | Mean Gap Ratio | Mean Top1 Dist | Mean Top2 Dist | Mean Decision Gap | Mean Density |")
+    lines.append("| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
     
+    projection_display_names = {
+        "raw": "Raw",
+        "random": "Random",
+        "oracle_svd": "Oracle-SVD"
+    }
+
     for N in sorted(results_by_N.keys()):
         for config in results_by_N[N]:
             r = config["results"]
             w_str = str(config["W"]) if config["W"] is not None else "-"
+            proj_name = projection_display_names.get(config["type"], config["type"])
             
             # Print recall as Mean +- Std if std > 0
             if "std_recall_at_1" in r and r["std_recall_at_1"] > 0:
@@ -279,9 +292,10 @@ def generate_report(results_by_N, md_path, capacity_breakpoints):
             else:
                 recall_str = f"{r['recall_at_1']*100:.1f}%"
                 
-            lines.append(f"| {N} | {config['type']} | {w_str} | {recall_str} | "
+            lines.append(f"| {N} | {proj_name} | {w_str} | {recall_str} | "
                          f"{r['recall_at_10']*100:.1f}% | {r['mean_rank']:.1f} | {r['p5_margin']:.2f} | "
-                         f"{r['mean_gap_ratio']:.2f} | {r['mean_decision_gap']:.2f} | {r['mean_prototype_density']:.2f} |")
+                         f"{r['mean_gap_ratio']:.2f} | {r['mean_top1_dist']:.2f} | {r['mean_top2_dist']:.2f} | "
+                         f"{r['mean_decision_gap']:.2f} | {r['mean_prototype_density']:.2f} |")
             
     with open(md_path, 'w', encoding='utf-8') as f:
         f.write("\n".join(lines))
@@ -438,7 +452,7 @@ def main():
             rand_res_list = []
             for seed in [42, 101, 202]:
                 gen_state = torch.random.get_rng_state()
-                torch.manual_seed(seed + W)
+                torch.manual_seed(seed)
                 R = torch.randn(W, 384)
                 R = R / torch.linalg.norm(R, dim=1, keepdim=True)
                 torch.random.set_rng_state(gen_state)

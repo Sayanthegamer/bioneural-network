@@ -358,6 +358,14 @@ def main():
         "bge-small-en-v1.5"
     ]
     
+    encoder_mapping = {
+        "all-MiniLM-L6-v2": "sentence-transformers/all-MiniLM-L6-v2",
+        "e5-small-v2": "intfloat/e5-small-v2",
+        "all-mpnet-base-v2": "sentence-transformers/all-mpnet-base-v2",
+        "e5-base-v2": "intfloat/e5-base-v2",
+        "bge-small-en-v1.5": "BAAI/bge-small-en-v1.5"
+    }
+    
     results_dir = "experiments/results"
     logs_dir = "experiments/results/logs"
     os.makedirs(logs_dir, exist_ok=True)
@@ -384,7 +392,7 @@ def main():
     # --- FIRST PASS: Sweep all encoders up to N=800 ---
     for encoder_name in encoders:
         print(f"\n[+] Loading encoder: {encoder_name}...")
-        pipeline = JournalPipeline(encoder_name)
+        pipeline = JournalPipeline(encoder_mapping[encoder_name])
         dim_in = pipeline.encoder.get_sentence_embedding_dimension()
         
         for N in [100, 200, 400, 800]:
@@ -392,10 +400,15 @@ def main():
             facts = generate_facts(N)
             labels = torch.tensor([f["label"] for f in facts])
             
+            is_e5 = "e5" in encoder_name.lower()
             print("      Ingesting text embeddings...")
             with torch.no_grad():
-                all_statements = [s for f in facts for s in f["statements"]]
-                all_queries = [f["query"] for f in facts]
+                if is_e5:
+                    all_statements = [f"passage: {s}" for f in facts for s in f["statements"]]
+                    all_queries = [f"query: {f['query']}" for f in facts]
+                else:
+                    all_statements = [s for f in facts for s in f["statements"]]
+                    all_queries = [f["query"] for f in facts]
                 
                 statements_flat = pipeline.encoder.encode(all_statements, batch_size=256, convert_to_tensor=True, device='cpu')
                 raw_statements = statements_flat.view(N, 10, dim_in)
@@ -537,16 +550,21 @@ def main():
         
     for encoder_name in second_pass_encoders:
         print(f"\n[+] Running Second Pass: {encoder_name} at N=1600...")
-        pipeline = JournalPipeline(encoder_name)
+        pipeline = JournalPipeline(encoder_mapping[encoder_name])
         dim_in = pipeline.encoder.get_sentence_embedding_dimension()
         
         N = 1600
         facts = generate_facts(N)
         labels = torch.tensor([f["label"] for f in facts])
         
+        is_e5 = "e5" in encoder_name.lower()
         with torch.no_grad():
-            all_statements = [s for f in facts for s in f["statements"]]
-            all_queries = [f["query"] for f in facts]
+            if is_e5:
+                all_statements = [f"passage: {s}" for f in facts for s in f["statements"]]
+                all_queries = [f"query: {f['query']}" for f in facts]
+            else:
+                all_statements = [s for f in facts for s in f["statements"]]
+                all_queries = [f["query"] for f in facts]
             
             statements_flat = pipeline.encoder.encode(all_statements, batch_size=256, convert_to_tensor=True, device='cpu')
             raw_statements = statements_flat.view(N, 10, dim_in)

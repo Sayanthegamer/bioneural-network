@@ -362,7 +362,7 @@ def main():
     print("  Experiment 5: Unambiguous Schema Scaling Sweeps")
     print("====================================================")
     
-    results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "experiment_1_width_scaling")
+    results_dir = os.path.join(os.path.dirname(__file__), "..", "results", "experiment_5_unambiguous_scaling")
     os.makedirs(results_dir, exist_ok=True)
     csv_path = os.path.join(results_dir, "unambiguous_scaling.csv")
     plot_path = os.path.join(results_dir, "unambiguous_scaling.png")

@@ -9,7 +9,7 @@ import random
 import matplotlib.pyplot as plt
 from sentence_transformers import SentenceTransformer
 from sklearn.svm import LinearSVC
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, RidgeClassifier
 
 # Add mnc_project to system path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
@@ -304,8 +304,8 @@ def run_linear_probe(statements, queries, labels, N):
     X_test = queries.cpu().numpy()
     y_test = np.array([i for i in range(N)])
     
-    # 1. Primary probe: LinearSVC
-    clf_svc = LinearSVC(dual=False, C=1.0, random_state=42, max_iter=2000)
+    # 1. Primary probe: RidgeClassifier (used as a 100x faster proxy for LinearSVC)
+    clf_svc = RidgeClassifier(alpha=1.0, random_state=42)
     clf_svc.fit(X_train, y_train)
     svc_acc = clf_svc.score(X_test, y_test)
     

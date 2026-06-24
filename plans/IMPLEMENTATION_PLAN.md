@@ -46,3 +46,8 @@
 * **Task 8.1:** Diagnose and resolve the `OfflineMLP` generalization gap by regularizing outputs and optimizing training convergence (removing early stopping limits). (Completed: MLP recall resolved to $99.34\% \pm 0.12\%$).
 * **Task 8.2:** Audit `ReplayLinear` primacy bias (logit domination from early class updates). (Completed).
 * **Task 8.3:** Implement the Frozen Representation Test to isolate hidden representation drift from output template interference. (Completed: Proved that output template interference is the primary driver of catastrophic forgetting).
+
+## Stage 9: Relational Manifold Audit & Oracles (Experiment 3)
+**Objective:** Run a rigorous diagnostic audit to trace semantic representational capacity and investigate metric crowding/information loss.
+* **Task 9.1:** Build [relational_manifold_audit.py](file:///c:/Users/Anon/Downloads/Northstar/experiments/relational_manifold_audit.py) to evaluate 5 semantic encoders up to $N=800$ (and $N=1600$ for baseline MiniLM and best alternative). Track prototype advantage, Margins CDF, oracle centroid vs. exemplar Top-K recall, distance metrics (L1, L2, Cosine) on raw/L2-normalized embeddings, and projection distortion (Random vs SVD projection). (Script completed and running in background).
+* **Task 9.2 (In Progress):** Speed up LinearSVC classification probe fits for large N (800 and 1600 facts) on normalized data. Current progress indicates that the primal solver (`dual=False`) takes $\approx 150$ seconds per configuration fit due to hypersphere packing density. Running benchmark [benchmark_svc.py](file:///C:/Users/Anon/.gemini/antigravity-ide/brain/a32e5034-4795-4ac6-abd7-7b8295d50bbb/scratch/benchmark_svc.py) to test dual solver (`dual=True` or `tol=1e-3`) for 10x–100x speedup.

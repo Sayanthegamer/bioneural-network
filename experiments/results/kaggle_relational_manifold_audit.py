@@ -1,4 +1,22 @@
+# ==============================================================================
+# SELF-CONTAINED RELATIONAL MANIFOLD AUDIT & ORACLES FOR KAGGLE
+# ==============================================================================
+# This script is fully self-contained. You can paste it directly into a single
+# Kaggle Notebook cell. It automatically handles package installation, embeds 
+# the custom MNC layers, and executes the relational collision sweeps.
+# It leverages GPU acceleration if available to prevent any system freezes.
+# ==============================================================================
+
+import subprocess
 import sys
+
+# Ensure required packages are installed
+try:
+    import sentence_transformers
+except ImportError:
+    print("[*] Installing sentence-transformers package...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "sentence-transformers"])
+
 import os
 import csv
 import time
@@ -8,13 +26,78 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from sentence_transformers import SentenceTransformer
-from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression, RidgeClassifier
 
-# Add mnc_project to system path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mnc_project'))
-from mnc.layers import MNCLinear
-from pipeline import JournalPipeline
+# ==============================================================================
+# GPU/CPU DEVICE CONFIGURATION
+# ==============================================================================
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print(f"[*] Executing on device: {device}")
+
+# ==============================================================================
+# 1. CORE ARCHITECTURE & MNC LAYERS
+# ==============================================================================
+
+class MNCAdderFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x, w):
+        x_exp = x.unsqueeze(1)  # [Batch, 1, In_Features]
+        w_exp = w.unsqueeze(0)  # [1, Out_Features, In_Features]
+        diff = x_exp - w_exp    
+        out = -torch.abs(diff).sum(dim=2)  # Shape: [Batch, Out_Features]
+        ctx.save_for_backward(diff)
+        return out
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        diff, = ctx.saved_tensors
+        grad_output_exp = grad_output.unsqueeze(2)
+        grad_w_diff = diff  # (X - W)
+        grad_w = (grad_output_exp * grad_w_diff).sum(dim=0)
+        grad_x_diff = torch.clamp(diff, min=-1.0, max=1.0)
+        grad_x = -(grad_output_exp * grad_x_diff).sum(dim=1)
+        return grad_x, grad_w
+
+def mnc_adder(x, w):
+    return MNCAdderFunction.apply(x, w)
+
+class MNCLinear(nn.Module):
+    def __init__(self, in_features, out_features):
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.W = nn.Parameter(torch.Tensor(out_features, in_features))
+        self.bias = nn.Parameter(torch.Tensor(out_features))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.normal_(self.W, mean=0.0, std=1.0)
+        with torch.no_grad():
+            self.W.data = self.W.data / (self.W.data.norm(p=2, dim=1, keepdim=True) + 1e-8)
+        nn.init.zeros_(self.bias)
+
+    def forward(self, x):
+        # Chunk large inputs to prevent CUDA OOM on high-dimensional broad-casts
+        if x.shape[0] > 1000:
+            out_list = []
+            for i in range(0, x.shape[0], 1000):
+                chunk = x[i:i+1000]
+                out_list.append(mnc_adder(chunk, self.W))
+            out = torch.cat(out_list, dim=0)
+        else:
+            out = mnc_adder(x, self.W)
+        return out + self.bias
+
+
+class JournalPipeline:
+    def __init__(self, model_name='all-MiniLM-L6-v2'):
+        print(f"[*] Initializing local feature extractor: {model_name}")
+        self.encoder = SentenceTransformer(model_name)
+        self.encoder.to(device)
+
+# ==============================================================================
+# 2. HELPER FUNCTIONS
+# ==============================================================================
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -32,11 +115,11 @@ class ScaleDistances(nn.Module):
     def forward(self, x):
         return (x + self.shift) / self.scale
 
-def autocalibrate_scale_distances(in_features, num_samples=1000):
+def autocalibrate_scale_distances(in_features, device, num_samples=1000):
     set_seed(42)
-    x = torch.randn(num_samples, in_features)
+    x = torch.randn(num_samples, in_features, device=device)
     x = x / (x.norm(p=2, dim=1, keepdim=True) + 1e-8)
-    w = torch.randn(num_samples, in_features)
+    w = torch.randn(num_samples, in_features, device=device)
     w = w / (w.norm(p=2, dim=1, keepdim=True) + 1e-8)
     neg_l1 = -torch.norm(x - w, p=1, dim=1)
     mean_val = neg_l1.mean().item()
@@ -129,12 +212,10 @@ def generate_facts(N):
 
 def compute_distances(ref, query, metric):
     if metric == "L1":
-        # ref: [N, D] or [N_all, D], query: [Q, D]
         return torch.cdist(query.unsqueeze(0), ref.unsqueeze(0), p=1).squeeze(0)
     elif metric == "L2":
         return torch.cdist(query.unsqueeze(0), ref.unsqueeze(0), p=2).squeeze(0)
     elif metric == "Cosine":
-        # Cosine distance = 1 - sim
         ref_norm = ref / (ref.norm(p=2, dim=1, keepdim=True) + 1e-8)
         query_norm = query / (query.norm(p=2, dim=1, keepdim=True) + 1e-8)
         return 1.0 - torch.mm(query_norm, ref_norm.t())
@@ -142,7 +223,6 @@ def compute_distances(ref, query, metric):
         raise ValueError(f"Unknown metric {metric}")
 
 def run_metric_evaluation(statements, queries, labels, metric, k_list=[1, 5, 10, 20]):
-    # statements: [N, 10, D], queries: [N, D], labels: [N]
     N, num_exemplars, D = statements.shape
     device = statements.device
     
@@ -264,12 +344,12 @@ def run_linear_probe(statements, queries, labels, N):
     X_test = queries.cpu().numpy()
     y_test = np.array([i for i in range(N)])
     
-    # 1. Primary probe: RidgeClassifier (used as a 100x faster proxy for LinearSVC)
+    # Primary probe: RidgeClassifier (Cholesky solver is extremely fast on CPU)
     clf_svc = RidgeClassifier(alpha=1.0, solver='cholesky', random_state=42)
     clf_svc.fit(X_train, y_train)
     svc_acc = clf_svc.score(X_test, y_test)
     
-    # 2. Secondary probe (cross-verification at N <= 400)
+    # Secondary probe (cross-verification at N <= 400)
     lr_acc = -1.0
     if N <= 400:
         clf_lr = LogisticRegression(solver='lbfgs', max_iter=200, random_state=42)
@@ -305,9 +385,13 @@ def compute_jl_distortion(raw_vectors, proj_vectors, sample_size=5000):
     
     return mean_dist, median_dist, p95_dist
 
+# ==============================================================================
+# 3. SWEEP EXECUTION ROUTINE
+# ==============================================================================
+
 def main():
     print("====================================================")
-    print("  Experiment 3: Relational Manifold Audit & Oracles")
+    print("  Kaggle: Relational Manifold Audit & Oracles Sweep")
     print("====================================================")
     
     encoders = [
@@ -326,10 +410,8 @@ def main():
         "bge-small-en-v1.5": "BAAI/bge-small-en-v1.5"
     }
     
-    results_dir = "experiments/results"
-    logs_dir = "experiments/results/logs"
-    os.makedirs(logs_dir, exist_ok=True)
-    
+    # Save directly to Kaggle's working directory
+    results_dir = "."
     csv_path = os.path.join(results_dir, "relational_manifold_audit.csv")
     headers = [
         "encoder", "norm_mode", "space", "projection", "N", "metric",
@@ -352,16 +434,17 @@ def main():
     # --- FIRST PASS: Sweep all encoders up to N=800 ---
     for encoder_name in encoders:
         print(f"\n[+] Loading encoder: {encoder_name}...")
+        t0 = time.time()
         pipeline = JournalPipeline(encoder_mapping[encoder_name])
-        dim_in = pipeline.encoder.get_sentence_embedding_dimension()
+        dim_in = pipeline.encoder.get_embedding_dimension()
+        print(f"    Loaded in {time.time() - t0:.2f}s | Dimension: {dim_in}")
         
         for N in [100, 200, 400, 800]:
-            print(f"\n  [-] Running N = {N} facts...")
+            print(f"  [-] Running N = {N} facts...")
             facts = generate_facts(N)
-            labels = torch.tensor([f["label"] for f in facts])
+            labels = torch.tensor([f["label"] for f in facts], device=device)
             
             is_e5 = "e5" in encoder_name.lower()
-            print("      Ingesting text embeddings...")
             with torch.no_grad():
                 if is_e5:
                     all_statements = [f"passage: {s}" for f in facts for s in f["statements"]]
@@ -370,12 +453,11 @@ def main():
                     all_statements = [s for f in facts for s in f["statements"]]
                     all_queries = [f["query"] for f in facts]
                 
-                statements_flat = pipeline.encoder.encode(all_statements, batch_size=256, convert_to_tensor=True, device='cpu')
+                statements_flat = pipeline.encoder.encode(all_statements, batch_size=256, convert_to_tensor=True, device=device)
                 raw_statements = statements_flat.view(N, 10, dim_in)
-                raw_queries = pipeline.encoder.encode(all_queries, batch_size=256, convert_to_tensor=True, device='cpu')
+                raw_queries = pipeline.encoder.encode(all_queries, batch_size=256, convert_to_tensor=True, device=device)
                 
             for norm_mode in ["raw", "l2_normalized"]:
-                print(f"      Normalization mode: {norm_mode}")
                 if norm_mode == "l2_normalized":
                     norm_statements = raw_statements / (raw_statements.norm(p=2, dim=2, keepdim=True) + 1e-8)
                     norm_queries = raw_queries / (raw_queries.norm(p=2, dim=1, keepdim=True) + 1e-8)
@@ -398,12 +480,10 @@ def main():
                         proj_methods = ["random", "svd"]
                         
                     for proj_method in proj_methods:
-                        print(f"      Space: {space_name} | Projection: {proj_method}")
-                        
                         if proj_method == "random":
                             set_seed(42)
-                            shift, scale = autocalibrate_scale_distances(dim_proj)
-                            mnc_linear = MNCLinear(dim_in, dim_proj)
+                            shift, scale = autocalibrate_scale_distances(dim_proj, device=device)
+                            mnc_linear = MNCLinear(dim_in, dim_proj).to(device)
                             for param in mnc_linear.parameters():
                                 param.requires_grad = False
                             
@@ -495,6 +575,12 @@ def main():
                                 if encoder_name not in encoder_800_recalls:
                                     encoder_800_recalls[encoder_name] = metrics_res["recall_proto"]
 
+        # Deallocate model to save memory
+        del pipeline.encoder
+        del pipeline
+        if device == 'cuda':
+            torch.cuda.empty_cache()
+
     # --- SECOND PASS: Identify best alternative and extend both to N=1600 ---
     alternative_recalls = {k: v for k, v in encoder_800_recalls.items() if k != "all-MiniLM-L6-v2"}
     best_alternative = max(alternative_recalls, key=alternative_recalls.get) if alternative_recalls else None
@@ -511,11 +597,11 @@ def main():
     for encoder_name in second_pass_encoders:
         print(f"\n[+] Running Second Pass: {encoder_name} at N=1600...")
         pipeline = JournalPipeline(encoder_mapping[encoder_name])
-        dim_in = pipeline.encoder.get_sentence_embedding_dimension()
+        dim_in = pipeline.encoder.get_embedding_dimension()
         
         N = 1600
         facts = generate_facts(N)
-        labels = torch.tensor([f["label"] for f in facts])
+        labels = torch.tensor([f["label"] for f in facts], device=device)
         
         is_e5 = "e5" in encoder_name.lower()
         with torch.no_grad():
@@ -526,12 +612,11 @@ def main():
                 all_statements = [s for f in facts for s in f["statements"]]
                 all_queries = [f["query"] for f in facts]
             
-            statements_flat = pipeline.encoder.encode(all_statements, batch_size=256, convert_to_tensor=True, device='cpu')
+            statements_flat = pipeline.encoder.encode(all_statements, batch_size=256, convert_to_tensor=True, device=device)
             raw_statements = statements_flat.view(N, 10, dim_in)
-            raw_queries = pipeline.encoder.encode(all_queries, batch_size=256, convert_to_tensor=True, device='cpu')
+            raw_queries = pipeline.encoder.encode(all_queries, batch_size=256, convert_to_tensor=True, device=device)
             
         for norm_mode in ["raw", "l2_normalized"]:
-            print(f"      Normalization mode: {norm_mode}")
             if norm_mode == "l2_normalized":
                 norm_statements = raw_statements / (raw_statements.norm(p=2, dim=2, keepdim=True) + 1e-8)
                 norm_queries = raw_queries / (raw_queries.norm(p=2, dim=1, keepdim=True) + 1e-8)
@@ -556,8 +641,8 @@ def main():
                 for proj_method in proj_methods:
                     if proj_method == "random":
                         set_seed(42)
-                        shift, scale = autocalibrate_scale_distances(dim_proj)
-                        mnc_linear = MNCLinear(dim_in, dim_proj)
+                        shift, scale = autocalibrate_scale_distances(dim_proj, device=device)
+                        mnc_linear = MNCLinear(dim_in, dim_proj).to(device)
                         for param in mnc_linear.parameters():
                             param.requires_grad = False
                         
@@ -644,6 +729,11 @@ def main():
                         with open(csv_path, 'a', newline='', encoding='utf-8') as csv_file:
                             writer = csv.DictWriter(csv_file, fieldnames=headers)
                             writer.writerow(row)
+
+        del pipeline.encoder
+        del pipeline
+        if device == 'cuda':
+            torch.cuda.empty_cache()
                             
     plot_results(csv_path, results_dir)
     generate_report(csv_path, results_dir)
@@ -694,64 +784,70 @@ def plot_results(csv_path, results_dir):
     
     # 3. Oracle Centroid vs Exemplar Top-K (MiniLM, N=800, L2-norm, Cosine)
     ax = axes[1, 0]
-    minilm_800 = [r for r in raw_data if r["encoder"] == "all-MiniLM-L6-v2" and r["N"] == "800" and r["space"] == "raw" and r["norm_mode"] == "l2_normalized" and r["metric"] == "Cosine"][0]
-    k_vals = [1, 5, 10, 20]
-    c_topk = [float(minilm_800[f"centroid_top{k}"]) for k in k_vals]
-    e_topk = [float(minilm_800[f"exemplar_top{k}"]) for k in k_vals]
-    
-    ax.plot(k_vals, c_topk, 'o-', label="Centroid Oracle")
-    ax.plot(k_vals, e_topk, 's-', label="Exemplar Oracle")
-    ax.set_title("MiniLM N=800: Oracle Centroid vs. Exemplar Top-K")
-    ax.set_xlabel("K Neighbors")
-    ax.set_ylabel("Oracle Recall")
-    ax.set_xticks(k_vals)
-    ax.legend(fontsize='small')
-    ax.grid(True, alpha=0.3)
-    ax.set_ylim(0.0, 1.05)
+    minilm_800_list = [r for r in raw_data if r["encoder"] == "all-MiniLM-L6-v2" and r["N"] == "800" and r["space"] == "raw" and r["norm_mode"] == "l2_normalized" and r["metric"] == "Cosine"]
+    if minilm_800_list:
+        minilm_800 = minilm_800_list[0]
+        k_vals = [1, 5, 10, 20]
+        c_topk = [float(minilm_800[f"centroid_top{k}"]) for k in k_vals]
+        e_topk = [float(minilm_800[f"exemplar_top{k}"]) for k in k_vals]
+        
+        ax.plot(k_vals, c_topk, 'o-', label="Centroid Oracle")
+        ax.plot(k_vals, e_topk, 's-', label="Exemplar Oracle")
+        ax.set_title("MiniLM N=800: Oracle Centroid vs. Exemplar Top-K")
+        ax.set_xlabel("K Neighbors")
+        ax.set_ylabel("Oracle Recall")
+        ax.set_xticks(k_vals)
+        ax.legend(fontsize='small')
+        ax.grid(True, alpha=0.3)
+        ax.set_ylim(0.0, 1.05)
     
     # 4. Rank statistics of Correct Class (Raw Cosine, L2-normalized, N=800)
     ax = axes[1, 1]
     rank_subset = [r for r in raw_data if r["N"] == "800" and r["space"] == "raw" and r["norm_mode"] == "l2_normalized" and r["metric"] == "Cosine"]
-    rank_subset = sorted(rank_subset, key=lambda x: x["encoder"])
-    enc_labels = [x["encoder"][:15] + "..." for x in rank_subset]
-    med_proto_ranks = [float(x["median_proto_rank"]) for x in rank_subset]
-    med_ex_ranks = [float(x["median_exemplar_rank"]) for x in rank_subset]
-    
-    x = np.arange(len(enc_labels))
-    width = 0.35
-    ax.bar(x - width/2, med_proto_ranks, width, label="Prototype Median Rank")
-    ax.bar(x + width/2, med_ex_ranks, width, label="Exemplar Median Rank")
-    ax.set_title("N=800 Median Rank of Correct Class")
-    ax.set_xticks(x)
-    ax.set_xticklabels(enc_labels, rotation=15, ha='right')
-    ax.set_ylabel("Median Rank (Lower is Better)")
-    ax.legend(fontsize='small')
-    ax.grid(True, alpha=0.3)
+    if rank_subset:
+        rank_subset = sorted(rank_subset, key=lambda x: x["encoder"])
+        enc_labels = [x["encoder"][:15] + "..." for x in rank_subset]
+        med_proto_ranks = [float(x["median_proto_rank"]) for x in rank_subset]
+        med_ex_ranks = [float(x["median_exemplar_rank"]) for x in rank_subset]
+        
+        x = np.arange(len(enc_labels))
+        width = 0.35
+        ax.bar(x - width/2, med_proto_ranks, width, label="Prototype Median Rank")
+        ax.bar(x + width/2, med_ex_ranks, width, label="Exemplar Median Rank")
+        ax.set_title("N=800 Median Rank of Correct Class")
+        ax.set_xticks(x)
+        ax.set_xticklabels(enc_labels, rotation=15, ha='right')
+        ax.set_ylabel("Median Rank (Lower is Better)")
+        ax.legend(fontsize='small')
+        ax.grid(True, alpha=0.3)
     
     # 5. Projection Distortion vs Recall Loss Scatter Plot (MiniLM, N=800, L1 metric)
     ax = axes[2, 0]
     proj_subset = [r for r in raw_data if r["encoder"] == "all-MiniLM-L6-v2" and r["N"] == "800" and r["space"] != "raw" and r["metric"] == "L1"]
-    raw_l1_rec = float([r for r in raw_data if r["encoder"] == "all-MiniLM-L6-v2" and r["N"] == "800" and r["space"] == "raw" and r["metric"] == "L1" and r["norm_mode"] == "raw"][0]["recall_proto"])
-    
-    for r in proj_subset:
-        rec_loss = raw_l1_rec - float(r["recall_proto"])
-        med_dist = float(r["distortion_median"])
-        lbl = f"{r['space']} ({r['projection']})"
-        ax.scatter(med_dist, rec_loss, s=100, label=lbl)
-    
-    ax.set_title("MiniLM N=800 L1: Median Distortion vs. Recall Loss")
-    ax.set_xlabel("Median Distortion (Pairwise)")
-    ax.set_ylabel("Recall Loss (Raw - Projected)")
-    ax.legend(fontsize='small')
-    ax.grid(True, alpha=0.3)
+    raw_l1_list = [r for r in raw_data if r["encoder"] == "all-MiniLM-L6-v2" and r["N"] == "800" and r["space"] == "raw" and r["metric"] == "L1" and r["norm_mode"] == "raw"]
+    if raw_l1_list and proj_subset:
+        raw_l1_rec = float(raw_l1_list[0]["recall_proto"])
+        for r in proj_subset:
+            rec_loss = raw_l1_rec - float(r["recall_proto"])
+            med_dist = float(r["distortion_median"])
+            lbl = f"{r['space']} ({r['projection']})"
+            ax.scatter(med_dist, rec_loss, s=100, label=lbl)
+        
+        ax.set_title("MiniLM N=800 L1: Median Distortion vs. Recall Loss")
+        ax.set_xlabel("Median Distortion (Pairwise)")
+        ax.set_ylabel("Recall Loss (Raw - Projected)")
+        ax.legend(fontsize='small')
+        ax.grid(True, alpha=0.3)
     
     # 6. Margin CDF tail distribution (N=800, Raw space, Cosine, normalized)
     ax = axes[2, 1]
     pcts = [1, 5, 10, 25, 50, 75, 90]
     for enc in encoders:
-        r_val = [r for r in raw_data if r["encoder"] == enc and r["N"] == "800" and r["space"] == "raw" and r["norm_mode"] == "l2_normalized" and r["metric"] == "Cosine"][0]
-        margin_vals = [float(r_val[f"margin_p{p}"]) for p in pcts]
-        ax.plot(margin_vals, pcts, 'o-', label=enc)
+        r_val_list = [r for r in raw_data if r["encoder"] == enc and r["N"] == "800" and r["space"] == "raw" and r["norm_mode"] == "l2_normalized" and r["metric"] == "Cosine"]
+        if r_val_list:
+            r_val = r_val_list[0]
+            margin_vals = [float(r_val[f"margin_p{p}"]) for p in pcts]
+            ax.plot(margin_vals, pcts, 'o-', label=enc)
     ax.set_title("N=800 Cosine: Margin CDF Tail Distribution")
     ax.set_xlabel("Margin Value")
     ax.set_ylabel("Cumulative Percentile (%)")
@@ -775,22 +871,22 @@ def plot_results(csv_path, results_dir):
     # 8. SVD vs. Random Projection recall (MiniLM, Cosine, Normalized)
     ax = axes[3, 1]
     svd_rand_subset = [r for r in raw_data if r["encoder"] == "all-MiniLM-L6-v2" and r["space"] != "raw" and r["metric"] == "Cosine" and r["norm_mode"] == "l2_normalized"]
-    n_values = sorted(list(set([int(r["N"]) for r in svd_rand_subset])))
-    
-    for s_name in ["proj_128d", "proj_256d"]:
-        for p_name in ["random", "svd"]:
-            recalls = []
-            for n in n_values:
-                match = [r for r in svd_rand_subset if r["space"] == s_name and r["projection"] == p_name and int(r["N"]) == n]
-                recalls.append(float(match[0]["recall_proto"]) if match else 0.0)
-            ax.plot(n_values, recalls, 'o--', label=f"{s_name} ({p_name})")
-            
-    ax.set_title("MiniLM: Random vs. SVD Projection (Diagnostic Upper Bound)")
-    ax.set_xlabel("Fact Horizon (N)")
-    ax.set_ylabel("Recall Accuracy")
-    ax.legend(fontsize='small')
-    ax.grid(True, alpha=0.3)
-    ax.set_ylim(0.0, 1.05)
+    if svd_rand_subset:
+        n_values = sorted(list(set([int(r["N"]) for r in svd_rand_subset])))
+        for s_name in ["proj_128d", "proj_256d"]:
+            for p_name in ["random", "svd"]:
+                recalls = []
+                for n in n_values:
+                    match = [r for r in svd_rand_subset if r["space"] == s_name and r["projection"] == p_name and int(r["N"]) == n]
+                    recalls.append(float(match[0]["recall_proto"]) if match else 0.0)
+                ax.plot(n_values, recalls, 'o--', label=f"{s_name} ({p_name})")
+                
+        ax.set_title("MiniLM: Random vs. SVD Projection (Diagnostic Upper Bound)")
+        ax.set_xlabel("Fact Horizon (N)")
+        ax.set_ylabel("Recall Accuracy")
+        ax.legend(fontsize='small')
+        ax.grid(True, alpha=0.3)
+        ax.set_ylim(0.0, 1.05)
     
     plt.tight_layout()
     plot_path = os.path.join(results_dir, "relational_manifold_audit.png")
@@ -849,19 +945,19 @@ def generate_report(csv_path, results_dir):
         f.write("| Space | Projection | Recall (Prototype) | Recall Loss | Median Distortion (ε) | 95th Percentile Distortion |\n")
         f.write("| :--- | :--- | :---: | :---: | :---: | :---: |\n")
         
-        raw_l1 = [r for r in data if r["encoder"] == "all-MiniLM-L6-v2" and r["N"] == "800" and r["space"] == "raw" and r["metric"] == "L1" and r["norm_mode"] == "raw"][0]
-        raw_rec = float(raw_l1["recall_proto"])
-        
-        for s_name in ["proj_128d", "proj_256d"]:
-            for p_name in ["random", "svd"]:
-                match = [r for r in data if r["encoder"] == "all-MiniLM-L6-v2" and r["N"] == "800" and r["space"] == s_name and r["projection"] == p_name and r["metric"] == "L1"]
-                if match:
-                    m = match[0]
-                    rec_p = float(m["recall_proto"]) * 100.0
-                    loss = (raw_rec - float(m["recall_proto"])) * 100.0
-                    med_d = float(m["distortion_median"])
-                    p95_d = float(m["distortion_p95"])
-                    f.write(f"| {s_name} | {p_name} | {rec_p:.1f}% | {loss:.1f}% | {med_d:.4f} | {p95_d:.4f} |\n")
+        raw_l1_list = [r for r in data if r["encoder"] == "all-MiniLM-L6-v2" and r["N"] == "800" and r["space"] == "raw" and r["metric"] == "L1" and r["norm_mode"] == "raw"]
+        if raw_l1_list:
+            raw_rec = float(raw_l1_list[0]["recall_proto"])
+            for s_name in ["proj_128d", "proj_256d"]:
+                for p_name in ["random", "svd"]:
+                    match = [r for r in data if r["encoder"] == "all-MiniLM-L6-v2" and r["N"] == "800" and r["space"] == s_name and r["projection"] == p_name and r["metric"] == "L1"]
+                    if match:
+                        m = match[0]
+                        rec_p = float(m["recall_proto"]) * 100.0
+                        loss = (raw_rec - float(m["recall_proto"])) * 100.0
+                        med_d = float(m["distortion_median"])
+                        p95_d = float(m["distortion_p95"])
+                        f.write(f"| {s_name} | {p_name} | {rec_p:.1f}% | {loss:.1f}% | {med_d:.4f} | {p95_d:.4f} |\n")
                     
         # 4. Margin percentiles
         f.write("\n### 4. Margin CDF Tail Distribution (N=800, Raw Space, Cosine Metric, L2-normalized)\n\n")

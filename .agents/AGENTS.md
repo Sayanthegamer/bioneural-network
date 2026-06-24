@@ -16,3 +16,7 @@ You have a collection of custom skills installed. You MUST proactively use these
 
 3. **Brevity & Token Optimization:**
    - If the user asks for brevity, mentions caveman, or invokes `/caveman`, immediately read and follow [caveman](file:///C:/Users/Anon/.gemini/antigravity-ide/skills/caveman/SKILL.md) (and utilize the [cavecrew](file:///C:/Users/Anon/.gemini/antigravity-ide/skills/cavecrew/SKILL.md) subagent presets for subagent delegation).
+
+4. **Heavy Computations & Kaggle Offloading:**
+   - Whenever execution requires running heavy scripts, sweeps, multi-model embedding evaluations, or large $N$ relational evaluations that could freeze or strain the user's local PC, you MUST design and package the experiments into self-contained, GPU-accelerated python scripts (formatted for single-cell Kaggle Notebook copy-paste) rather than proposing local terminal runs.
+

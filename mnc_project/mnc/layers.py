@@ -36,13 +36,22 @@ class MNCLinear(nn.Module):
         Input x shape: [Batch, In_Features]
         Output shape: [Batch, Out_Features]
         """
-        # Execute custom hardware-native distance calculation
-        out = mnc_adder(x, self.W)
+        # Chunk large inputs to prevent CUDA OOM on high-dimensional broad-casts
+        if x.shape[0] > 1000:
+            out_list = []
+            for i in range(0, x.shape[0], 1000):
+                chunk = x[i:i+1000]
+                out_list.append(mnc_adder(chunk, self.W))
+            out = torch.cat(out_list, dim=0)
+        else:
+            # Execute custom hardware-native distance calculation
+            out = mnc_adder(x, self.W)
         
         # Apply bias
         out = out + self.bias
         
         return out
+
 
 
 class MNCPrototypicalNetwork(nn.Module):

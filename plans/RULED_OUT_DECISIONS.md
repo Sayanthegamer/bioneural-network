@@ -88,3 +88,25 @@ This document tracks every design decision, loss function, optimizer configurati
 *   **The Result:** **Ruled out.**
 *   **Why it was ruled out:** The constant density sweep (`constant_density_test.py`) showed that recall, separation ratio, and normalized margins flatten out completely for $W \ge 128$ (e.g. recall at density 4.0 remains at ~78.5% across $W=128, 256, 512$). Once the projection dimension is wide enough to represent the encoder's semantic manifold losslessly, widening the bottleneck further without changing density provides zero benefit.
 
+---
+
+## ❌ 13. Centroid Compression Loss as the Capacity Wall Bottleneck
+*   **The Idea:** Averaging multiple statement exemplars into a single class centroid (Prototype) destroys relational/metric details, creating the capacity wall, and multi-exemplar retrieval (1-NN/k-NN) will raise capacity.
+*   **The Result:** **Ruled out.**
+*   **Why it was ruled out:** Verified empirically in `break_prototype_assumption.py` that Single Prototype centroids consistently *outperform* 1-NN, k-NN, and Multi-Prototype clustering across all bottleneck dimensions and fact sizes (e.g., 74.8% vs. 64.5% at $N=400$, $W=256$). Centroid averaging acts as a denoiser/regularizer, and retrieval compression loss $L_{\text{comp}}$ is near 1.0, proving single-centroid compression is not a bottleneck.
+
+---
+
+## ❌ 14. L1 Distance Metric as an Architectural Bottleneck
+*   **The Idea:** Relying on L1 distance (to maintain multiplication-free MNC hardware equivalence) loses significant metric information compared to L2 or Cosine distance metrics.
+*   **The Result:** **Ruled out.**
+*   **Why it was ruled out:** Auxiliary controls showed less than a 1% recall difference between L1, L2, and Cosine metrics in the raw 384D space under both Unique ID and Relational Collision regimes, indicating L1 is fully equivalent in representational capacity.
+
+---
+
+## ❌ 15. Unique ID Matching as a Measure of Real Semantic Capacity
+*   **The Idea:** Standard capacity sweeps using unique indices (e.g. room/task numbers) represent the true semantic recall limits of the bottleneck.
+*   **The Result:** **Ruled out.**
+*   **Why it was ruled out:** Introducing the Relational Collision regime (where color, location, and name entities are shared across classes, forcing relationship resolution) collapsed raw-space recall from 92.6% to 46.2% at $N=800$. Standard sweeps measure entity/ID matching, which overestimates true semantic recall capacity.
+
+

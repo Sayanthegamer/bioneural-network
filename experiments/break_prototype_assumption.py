@@ -228,20 +228,15 @@ def main():
             facts = generate_facts(N, collision_mode=collision_mode)
             
             # Embed statements and queries
-            print("  [-] Generating embeddings via MiniLM...")
+            print("  [-] Generating embeddings via MiniLM (Batched)...")
             with torch.no_grad():
-                # raw_statements shape: [N, 10, 384]
-                raw_statements = []
-                # raw_queries shape: [N, 384]
-                raw_queries = []
-                for f in facts:
-                    embs = pipeline.encoder.encode(f["statements"], convert_to_tensor=True, device='cpu') # [10, 384]
-                    raw_statements.append(embs)
-                    q_emb = pipeline.encoder.encode(f["query"], convert_to_tensor=True, device='cpu') # [384]
-                    raw_queries.append(q_emb)
+                all_statements = [s for f in facts for s in f["statements"]]
+                all_queries = [f["query"] for f in facts]
                 
-                raw_statements = torch.stack(raw_statements) # [N, 10, 384]
-                raw_queries = torch.stack(raw_queries) # [N, 384]
+                statements_flat = pipeline.encoder.encode(all_statements, batch_size=256, convert_to_tensor=True, device='cpu')
+                raw_statements = statements_flat.view(N, 10, 384)
+                
+                raw_queries = pipeline.encoder.encode(all_queries, batch_size=256, convert_to_tensor=True, device='cpu')
                 
             for space_cfg in spaces:
                 space_name = space_cfg["name"]
@@ -486,15 +481,13 @@ def main():
             facts = generate_facts(N, collision_mode=collision_mode)
             
             with torch.no_grad():
-                raw_statements = []
-                raw_queries = []
-                for f in facts:
-                    embs = pipeline.encoder.encode(f["statements"], convert_to_tensor=True, device='cpu')
-                    raw_statements.append(embs)
-                    q_emb = pipeline.encoder.encode(f["query"], convert_to_tensor=True, device='cpu')
-                    raw_queries.append(q_emb)
-                statements = torch.stack(raw_statements) # [N, 10, 384]
-                queries = torch.stack(raw_queries) # [N, 384]
+                all_statements = [s for f in facts for s in f["statements"]]
+                all_queries = [f["query"] for f in facts]
+                
+                statements_flat = pipeline.encoder.encode(all_statements, batch_size=256, convert_to_tensor=True, device='cpu')
+                statements = statements_flat.view(N, 10, 384)
+                
+                queries = pipeline.encoder.encode(all_queries, batch_size=256, convert_to_tensor=True, device='cpu')
                 
             centroids = statements.mean(dim=1)
             db_statements = statements.view(N * 10, 384)
@@ -519,7 +512,7 @@ def main():
                         elif metric == "Cosine":
                             # Normalize
                             db_norm = db_statements / (db_statements.norm(p=2, dim=1, keepdim=True) + 1e-8)
-                            q_norm = q / (q.norm(p=2, dim=1) + 1e-8)
+                            q_norm = q / (q.norm(p=2) + 1e-8)
                             centroids_norm = centroids / (centroids.norm(p=2, dim=1, keepdim=True) + 1e-8)
                             # Cosine distance = 1 - sim
                             dists_all = 1.0 - torch.mm(db_norm, q_norm.unsqueeze(1)).squeeze(1)
@@ -620,30 +613,37 @@ def generate_report(csv_path, aux_csv_path, results_dir):
         f.write("## 🏆 Scientific Verdict\n\n")
         
         # Deconstruct critical results
-        # We find W=128, W=256 at constant density 4.0 for Relational vs Unique ID
-        f.write("### 1. Constant Density (N/W = 4.0) Retrieval Comparison\n\n")
-        f.write("| Space | Regime | Prototype Recall | 1-NN Recall | Oracle Recall | Delta Margin (p5) | Lcomp Ratio | Silhouette |\n")
-        f.write("| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n")
+        # We find N=400 and N=800 for Relational vs Unique ID
+        f.write("### 1. Retrieval Comparison for N=400 and N=800\n\n")
+        f.write("| Space | N | Regime | Prototype Recall | 1-NN Recall | Oracle Recall | Delta Margin (p5) | Lcomp Ratio | Silhouette |\n")
+        f.write("| :--- | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n")
         
-        for space, w_val in [("proj_128d", 128), ("proj_256d", 256)]:
-            n_val = w_val * 4
-            for col_mode in ["False", "True"]:
-                col_name = "Relational" if col_mode == "True" else "Unique ID"
-                
-                # Fetch row
-                proto_rows = [r for r in data if r["space"] == space and r["collision_mode"] == col_mode and int(r["N"]) == n_val and r["method"] == "Prototype"]
-                nn_rows = [r for r in data if r["space"] == space and r["collision_mode"] == col_mode and int(r["N"]) == n_val and r["method"] == "1-NN"]
-                oracle_rows = [r for r in data if r["space"] == space and r["collision_mode"] == col_mode and int(r["N"]) == n_val and r["method"] == "Oracle"]
-                
-                if proto_rows and nn_rows and oracle_rows:
-                    p_rec = float(proto_rows[0]["recall"]) * 100.0
-                    n_rec = float(nn_rows[0]["recall"]) * 100.0
-                    o_rec = float(oracle_rows[0]["recall"]) * 100.0
-                    p5_m = float(proto_rows[0]["p5_margin"])
-                    lcomp = float(proto_rows[0]["mean_lcomp_ratio"])
-                    sil = float(proto_rows[0]["mean_silhouette"])
-                    f.write(f"| **{space} (N={n_val})** | {col_name} | {p_rec:.1f}% | {n_rec:.1f}% | {o_rec:.1f}% | {p5_m:.4f} | {lcomp:.3f} | {sil:.3f} |\n")
+        for space in ["raw_384d", "proj_128d", "proj_256d"]:
+            for n_val in [400, 800]:
+                for col_mode in ["False", "True"]:
+                    col_name = "Relational" if col_mode == "True" else "Unique ID"
                     
+                    # Fetch rows
+                    proto_rows = [r for r in data if r["space"] == space and r["collision_mode"] == col_mode and int(r["N"]) == n_val and r["method"] == "Prototype"]
+                    nn_rows = [r for r in data if r["space"] == space and r["collision_mode"] == col_mode and int(r["N"]) == n_val and r["method"] == "1-NN"]
+                    oracle_rows = [r for r in data if r["space"] == space and r["collision_mode"] == col_mode and int(r["N"]) == n_val and r["method"] == "Oracle"]
+                    
+                    if proto_rows and nn_rows and oracle_rows:
+                        p_recs = [float(r["recall"]) for r in proto_rows]
+                        n_recs = [float(r["recall"]) for r in nn_rows]
+                        o_recs = [float(r["recall"]) for r in oracle_rows]
+                        p5_ms = [float(r["p5_margin"]) for r in proto_rows]
+                        lcomps = [float(r["mean_lcomp_ratio"]) for r in proto_rows]
+                        sils = [float(r["mean_silhouette"]) for r in proto_rows]
+                        
+                        p_rec = np.mean(p_recs) * 100.0
+                        n_rec = np.mean(n_recs) * 100.0
+                        o_rec = np.mean(o_recs) * 100.0
+                        p5_m = np.mean(p5_ms)
+                        lcomp = np.mean(lcomps)
+                        sil = np.mean(sils)
+                        f.write(f"| **{space}** | {n_val} | {col_name} | {p_rec:.1f}% | {n_rec:.1f}% | {o_rec:.1f}% | {p5_m:.4f} | {lcomp:.3f} | {sil:.3f} |\n")
+                        
         f.write("\n### 2. Auxiliary Metric Control (Raw 384D Space, N=800 & 1600)\n\n")
         f.write("| N Facts | Regime | Metric | Prototype Recall | 1-NN Recall |\n")
         f.write("| :---: | :--- | :---: | :---: | :---: |\n")

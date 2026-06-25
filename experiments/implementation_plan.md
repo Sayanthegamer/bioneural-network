@@ -73,7 +73,7 @@ Modify the existing Experiment 4 script and its Kaggle counterpart to incorporat
 
 Create the new unambiguous scaling sweep script and its Kaggle template.
 
-#### [NEW] [unambiguous_scaling.py](file:///c:/Users/Anon/Downloads/Northstar/experiments/exp1_width_scaling/unambiguous_scaling.py)
+#### [NEW] [unambiguous_scaling.py](file:///c:/Users/Anon/Downloads/Northstar/experiments/exp5_unambiguous_scaling/unambiguous_scaling.py)
 A self-contained Python script to execute the Experiment 5 sweep:
 1. **Alias-Free Generator**:
    - Pools: `rooms` (100 names), `entrances` (100 names), `colors` (100 names), `projects` (100 names), `coordinators` (100 names), `sessions` (100 names).
@@ -102,7 +102,7 @@ A self-contained Python script to execute the Experiment 5 sweep:
    - PNG plots: `experiments/results/experiment_5_unambiguous_scaling/unambiguous_scaling.png`.
    - Markdown report: `experiments/results/experiment_5_unambiguous_scaling/unambiguous_scaling.md`.
 
-#### [NEW] [kaggle_unambiguous_scaling.py](file:///c:/Users/Anon/Downloads/Northstar/experiments/kaggle/kaggle_unambiguous_scaling.py)
+#### [NEW] [kaggle_unambiguous_scaling.py](file:///c:/Users/Anon/Downloads/Northstar/experiments/exp5_unambiguous_scaling/kaggle_unambiguous_scaling.py)
 * A self-contained version of `unambiguous_scaling.py` formatted for Kaggle notebooks (utilizing GPU if available).
 
 ---
@@ -110,37 +110,31 @@ A self-contained Python script to execute the Experiment 5 sweep:
 ## Tasks
 
 ### Task 1: Refactor and Polish Experiment 4 Telemetry
-- [ ] **Step 1: Edit `experiments/exp4_reranker/relational_reranker.py`**
-  - Add `alias_coverage_ratio` to the query loop:
-    ```python
-    aliases = query_to_labels[facts[q_idx]["query"]]
-    retrieved_aliases = sum(1 for a in aliases if a in candidates)
-    alias_coverage_ratio = retrieved_aliases / len(aliases)
-    ```
+- [x] **Step 1: Edit `experiments/exp4_reranker/relational_reranker.py`**
+  - Add `alias_coverage_ratio` to the query loop.
   - Rename all occurrences of `Oracle@K` to `Coverage@K` and `Bayes Ceiling` to `Theoretical Bayes Ceiling`.
   - Update `write_csv()`, `generate_plots()`, and `generate_report()` to handle the renamed variables.
-- [ ] **Step 2: Run verification test on relational_reranker.py**
+- [x] **Step 2: Run verification test on relational_reranker.py**
   Run: `mnc_project\venv\Scripts\python.exe experiments/exp4_reranker/relational_reranker.py --N_max 100`
-  Expected: Successful run, output files updated in `experiments/results/experiment_4_reranker/` with correct renames and headers.
-- [ ] **Step 3: Edit `experiments/kaggle/kaggle_relational_reranker.py`**
-  - Update the Kaggle template script with the same telemetry additions and metric renames.
-- [ ] **Step 4: Commit Experiment 4 refactoring**
-  Run: `git add experiments/exp4_reranker/relational_reranker.py experiments/kaggle/kaggle_relational_reranker.py` and commit with message `refactor: update exp4 reranker metrics and telemetry`.
+- [x] **Step 3: Edit `experiments/kaggle/kaggle_relational_reranker.py`**
+  - Updated the Kaggle template script with the same telemetry additions and metric renames.
+- [x] **Step 4: Commit Experiment 4 refactoring**
+  Committed.
 
 ### Task 2: Implement Experiment 5 (Unambiguous Schema Scaling)
-- [ ] **Step 1: Write `experiments/exp1_width_scaling/unambiguous_scaling.py`**
-  - Implement the alias-free generator (pools of 100).
-  - Implement Random (variance-controlled with seeds `[42, 101, 202]`) and Oracle-SVD projection mathematics.
+- [x] **Step 1: Write `experiments/exp5_unambiguous_scaling/unambiguous_scaling.py`**
+  - Implemented the alias-free generator (pools of 100).
+  - Implemented Random (variance-controlled with seeds `[42, 101, 202]`) and Oracle-SVD projection mathematics.
   - Calculate `Recall@1`, `Recall@5`, `Recall@10`, distance margins, `gap_ratio` (mean, p5, p10), `prototype_density`, and ranking telemetry (`top1_distance`, `top2_distance`, `decision_gap`).
   - Compute the capacity breakdown point $N^*$.
-  - Add plotting and reporting logic.
-- [ ] **Step 2: Run local micro-validation at N=100**
-  Run: `mnc_project\venv\Scripts\python.exe experiments/exp1_width_scaling/unambiguous_scaling.py --N_max 100`
-  Expected: Runs successfully, generates CSV, png, and markdown report under `experiments/results/experiment_5_unambiguous_scaling/`.
-- [ ] **Step 3: Create Kaggle script `experiments/kaggle/kaggle_unambiguous_scaling.py`**
-  - Save a copy of the self-contained script optimized for single-cell Kaggle running.
-- [ ] **Step 4: Commit Experiment 5**
-  Run: `git add experiments/exp1_width_scaling/unambiguous_scaling.py experiments/kaggle/kaggle_unambiguous_scaling.py` and commit with message `feat: implement exp5 unambiguous scaling sweep and SVD projection`.
+  - Added plotting and reporting logic.
+- [x] **Step 2: Run local micro-validation at N=100**
+  Run: `mnc_project\venv\Scripts\python.exe experiments/exp5_unambiguous_scaling/unambiguous_scaling.py --N_max 100`
+  Verified successfully.
+- [x] **Step 3: Create Kaggle script `experiments/exp5_unambiguous_scaling/kaggle_unambiguous_scaling.py`**
+  - Created self-contained script, user ran full N=3200 sweep on Kaggle and pasted results.
+- [x] **Step 4: Commit Experiment 5**
+  Committed. Scripts moved to dedicated `exp5_unambiguous_scaling/` folder.
 
 ---
 
@@ -150,7 +144,7 @@ A self-contained Python script to execute the Experiment 5 sweep:
 1. **Experiment 4 Local Run**:
    `mnc_project\venv\Scripts\python.exe experiments/exp4_reranker/relational_reranker.py --N_max 100`
 2. **Experiment 5 Local Run**:
-   `mnc_project\venv\Scripts\python.exe experiments/exp1_width_scaling/unambiguous_scaling.py --N_max 100`
+   `mnc_project\venv\Scripts\python.exe experiments/exp5_unambiguous_scaling/unambiguous_scaling.py --N_max 100`
 
 ### Manual Verification
 1. Inspect the generated output CSV and plots to confirm that `Recall@1` is listed explicitly, the gap ratio is tracked, and the capacity breakdown point $N^*$ is calculated and plotted.

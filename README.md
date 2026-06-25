@@ -1,4 +1,4 @@
-# 🧠 BioNeural Network — Metaplastic Neuro-Channel (MNC) Framework
+# BioNeural Network — Metaplastic Neuro-Channel (MNC) Framework
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 2.1+](https://img.shields.io/badge/pytorch-2.1+-ee4c2c.svg)](https://pytorch.org/)
@@ -6,7 +6,7 @@
 
 > **Bounded Continual Learning via Metaplastic Synaptic Uncertainty: Results, Limitations, and Open Questions**
 
-## 🎯 The Vision: Three Core Pillars
+## The Vision: Three Core Pillars
 The Metaplastic Neuro-Channel (MNC) is a research-grade neural architecture designed from the ground up to solve three fundamental challenges in modern AI:
 
 1. **Resolving Catastrophic Forgetting:** Neural networks must learn sequentially over a lifetime without a replay buffer destroying old knowledge to make room for new data.
@@ -15,20 +15,20 @@ The Metaplastic Neuro-Channel (MNC) is a research-grade neural architecture desi
 
 ---
 
-## ⚙️ Architectural Design: How We Achieve the Goals
+## Architectural Design: How We Achieve the Goals
 
 To meet these goals, the MNC discards standard Cross-Correlation (Matrix Multiplication) entirely. It replaces the computational bottlenecks of standard Transformers with ALU-friendly, multiplication-free flow control operations.
 
 | Component / Feature | Mechanism for Efficiency & Continual Learning |
 | :--- | :--- |
 | **L1 Spatial Distance** | The core forward pass uses $y = -\|x - w\|_1 + b$. By bypassing `matmul`, the network drastically reduces computational cost and energy usage. |
-| **Custom Autograd Kernels** | To prevent dead gradients from hard clamping, the backward pass uses a decoupled $L_2$ weight surrogate and HardTanh input clamping, implemented in custom PyTorch/Triton kernels. |
+| **Custom Autograd Kernels** | To prevent dead gradients from hard clamping, the backward pass uses a decoupled $L_2$ weight surrogate and HardTanh input clamping, implemented via a custom `torch.autograd.Function` (no Triton kernels in-repo yet). |
 | **The MESU Engine** | **M**etaplasticity from **S**ynaptic **U**ncertainty. Every parameter tracks its Bayesian variance ($\sigma^2$). Update magnitudes are gated by uncertainty: confident memories are locked down to prevent catastrophic forgetting, while uncertain parameters remain plastic. |
 | **Dual-Timescale Cascades** | A slow-moving cascade ($u_2$) pulls active parameters back toward consolidated coordinates, anchoring templates and bounding long-term parameter drift. |
 
 ---
 
-## 🔬 Early Validation & Diagnostics (Phase 1)
+## Early Validation & Diagnostics (Phase 1)
 
 Before stress-testing at scale, the core framework was validated against a 10-Day Delayed Recall Protocol (Sequential training on Days 1-5, Interference on Days 6-9, Query on Day 10).
 
@@ -40,24 +40,24 @@ Before stress-testing at scale, the core framework was validated against a 10-Da
 
 ---
 
-## 🧪 The Scientific Audits: Discovering the Capacity Ceilings (Phase 2)
+## The Scientific Audits: Discovering the Capacity Ceilings (Phase 2)
 
 To understand the true scaling laws of the architecture, we conducted a rigorous 5-part experimental suite (Experiments 1 through 5). This journey revealed that the bottleneck to lifelong learning isn't just parameter overwriting—it is the geometry of the semantic space itself.
 
-### 📊 Experiment 1: Width-Scaling & The Capacity Wall
+### Experiment 1: Width-Scaling & The Capacity Wall
 * **Objective:** Determine if simply making the bottleneck wider ($W=32 \to W=512$) solves forgetting.
 * **Finding:** We hit a severe capacity wall. Without replay, recall decays following a power-law $1/N$ ($48\%$ at $N=5$, dropping to $1.1\%$ at $N=100$). Crucially, **forgetting is interference-dominated**. We confirmed a universal geometric density collapse principle: crowding is proportional to $N/W$. Widening the network beyond $W \ge 128$ yielded zero benefit if the underlying embedding manifold lacked the necessary separation space.
 
-### 📊 Experiment 2: Breaking the Prototype Assumption
+### Experiment 2: Breaking the Prototype Assumption
 * **Objective:** Does averaging statement embeddings into a single class centroid (Prototype) destroy metric details compared to instance-based K-Nearest Neighbors (k-NN)?
 * **Finding:** We mathematically falsified the centroid compression bottleneck. Prototype classification performed nearly identically to instance-based 1-NN lookup (e.g., 92.6% vs 90.0% at N=800). The prototype readout head design is optimal; the true bottleneck lies in projection distortion and manifold boundaries.
 
-### 📊 Experiment 3 & 4: Relational Aliasing & The "28% Wall"
+### Experiment 3 & 4: Relational Aliasing & The "28% Wall"
 * **Objective:** Audit the memory capacity using structured relational facts (e.g., "The blue folder for Project X is in Room Y").
 * **Finding:** In Experiment 3, recall completely flatlined at $\sim 28\%$ even at small $N$. We discovered **Relational Aliasing**. Due to the combinatorial limits of the synthetic generator, an average of 3.56 distinct facts shared the *exact same query text*. This forced an absolute **Theoretical Bayes Ceiling** of $1/3.56 \approx 28.1\%$.
 * **The Reranker Verification (Exp 4):** A secondary cross-encoder reranker yielded 0.0% gain. However, the target fact was found in the Top-10 retrieved candidates 100% of the time (`Coverage@10 = 100%`). This proved the memory was functioning perfectly; the failure was purely due to unresolvable query ambiguity.
 
-### 📊 Experiment 5: Unambiguous Schema Scaling & True Capacity ($N^*$)
+### Experiment 5: Unambiguous Schema Scaling & True Capacity ($N^*$)
 * **Objective:** Having isolated the aliasing flaw, we generated an unambiguously aliased dataset (max_alias = 1) scaling up to $N=3200$ to find the true representation breakpoint $N^*$ (where Recall@1 $\ge 95\%$ and P5 Margin $\ge 0$).
 * **Finding:**
   * The raw uncompressed 384D space supports $N^* = 200$ perfectly retrieved sequential facts.
@@ -68,7 +68,7 @@ To understand the true scaling laws of the architecture, we conducted a rigorous
 
 ---
 
-## 📓 Verified Limitations & Ruled-Out Decisions
+## Verified Limitations & Ruled-Out Decisions
 
 Our aggressive falsification process ruled out several assumptions:
 1. **SGD + Sparse Replay Fails:** Using a small replay buffer (size 10) with standard SGD collapses to 2.0% recall.
@@ -77,7 +77,7 @@ Our aggressive falsification process ruled out several assumptions:
 
 ---
 
-## 🚀 Future Roadmap
+## Future Roadmap
 
 With the MESU v1 framework thoroughly mapped, the next phase focuses on overcoming the identified projection distortion bottlenecks:
 1. **Learned SVD / Data-Aligned Projections:** Replacing the random linear bottleneck projections with learned weights that minimize distance distortion, approximating the lossless qualities of the Oracle-SVD test.
@@ -87,7 +87,7 @@ With the MESU v1 framework thoroughly mapped, the next phase focuses on overcomi
 
 ---
 
-## 📁 Project Structure & Quick Start
+## Project Structure & Quick Start
 
 ```
 bioneural-network/
@@ -110,7 +110,7 @@ bioneural-network/
 
 ```bash
 cd mnc_project
-virtualenv venv
+python -m venv venv
 source venv/bin/activate  # On Windows use: venv\Scripts\activate
 pip install -r requirements.txt
 
@@ -126,7 +126,7 @@ python ../experiments/exp5_unambiguous_scaling/unambiguous_scaling.py --N_max 10
 
 ---
 
-## 📖 Citation
+## Citation
 
 ```bibtex
 @software{mnc_framework_2026,

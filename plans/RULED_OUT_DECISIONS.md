@@ -109,4 +109,19 @@ This document tracks every design decision, loss function, optimizer configurati
 *   **The Result:** **Ruled out.**
 *   **Why it was ruled out:** Introducing the Relational Collision regime (where color, location, and name entities are shared across classes, forcing relationship resolution) collapsed raw-space recall from 92.6% to 46.2% at $N=800$. Standard sweeps measure entity/ID matching, which overestimates true semantic recall capacity.
 
+---
+
+## ❌ 16. Accidental Query Collision / Aliasing as the Cause of Recall Collapse under Compression
+*   **The Idea:** Recall collapse under dimension reduction (e.g., Random or SVD projections) is primarily caused by naming collisions or query-class ambiguity.
+*   **The Result:** **Ruled out.**
+*   **Why it was ruled out:** In Experiment 5, we constructed an alias-free, duplicate-free statement-query dataset where every query maps uniquely to a single fact (`max_alias == 1`, `duplicate_queries == 0`). Despite eliminating all naming and retrieval ambiguity, recall still collapsed under Random projection (dropping to 42.8% at $W=32$ and 79.2% at $W=128$ for $N=3200$). This proves that recall degradation is driven by representational density and crowding on the projected manifold, not query ambiguity.
+
+---
+
+## ❌ 17. SVD Projection as a Realistic Deployable Compression Technique (Oracle Leakage)
+*   **The Idea:** Singular Value Decomposition (SVD) can be deployed out-of-the-box as a general compression scheme for neural representation vectors.
+*   **The Result:** **Ruled out as a standard deployment technique (treated only as an oracle upper-bound baseline).**
+*   **Why it was ruled out:** To compute the SVD projection matrix, the right-singular vectors must be fitted directly on the test/evaluation statement corpus itself. This introduces significant data leakage (as the projection basis adaptively rotates to fit the specific facts being queried). Therefore, SVD is an upper-bound ceiling rather than a deployable, zero-shot general compression method.
+
+
 

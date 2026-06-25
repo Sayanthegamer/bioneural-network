@@ -138,7 +138,7 @@ The codebase has been refactored and organized into structured folders:
   * Run `git add experiments/exp4_reranker/relational_reranker.py experiments/kaggle/kaggle_relational_reranker.py` and commit with message `refactor: update exp4 reranker metrics and telemetry`.
 
 ### Task 2: Implement Experiment 5 (Unambiguous Schema Scaling)
-* **Step 2.1: Write `experiments/exp1_width_scaling/unambiguous_scaling.py`**
+* **Step 2.1: Write `experiments/exp5_unambiguous_scaling/unambiguous_scaling.py`**
   * **Fact Generator:** Create an alias-free fact generator utilizing pool sizes of 100 rooms, 100 entrances, 100 colors, etc. yielding 10,000 unique combinations. Assert `max_alias == 1` and `duplicate_queries == 0` during initialization.
   * **Projections:** Implement Random Projection ($Y = X R^T$) and SVD Projection ($Y = X V_W^T$) using pure matrix operations. SVD is computed using `torch.svd` or `np.linalg.svd` on the statement embedding matrix.
   * **Evaluation Metric Sweep:** Sweep $N \in \{100, 200, 400, 800, 1600, 3200\}$ and widths $W \in \{32, 64, 128\}$. Log:
@@ -148,14 +148,14 @@ The codebase has been refactored and organized into structured folders:
     - Gap ratio statistics (Mean, p5, p10)
     - Prototype density (Mean, p5, p10 distance to 10 nearest prototypes)
     - Calculate and display capacity breakpoint $N^*$ for each width/projection type.
-  * **Outputs:** Generate CSV logging under `experiments/results/experiment_1_width_scaling/unambiguous_scaling.csv`, a matplotlib PNG plot under `experiments/results/experiment_1_width_scaling/unambiguous_scaling.png`, and a markdown summary with SVD leakage disclosures.
+  * **Outputs:** Generate CSV logging under `experiments/results/experiment_5_unambiguous_scaling/unambiguous_scaling.csv`, a matplotlib PNG plot under `experiments/results/experiment_5_unambiguous_scaling/unambiguous_scaling.png`, and a markdown summary with SVD leakage disclosures.
 * **Step 2.2: Verify locally at N=100**
   * Run:
     ```powershell
-    mnc_project\venv\Scripts\python.exe experiments/exp1_width_scaling/unambiguous_scaling.py --N_max 100
+    mnc_project\venv\Scripts\python.exe experiments/exp5_unambiguous_scaling/unambiguous_scaling.py --N_max 100
     ```
 * **Step 2.3: Generate Kaggle single-cell script**
-  * Save a self-contained notebook copy to `experiments/kaggle/kaggle_unambiguous_scaling.py`.
+  * Save a self-contained notebook copy to `experiments/exp5_unambiguous_scaling/kaggle_unambiguous_scaling.py`.
 * **Step 2.4: Stage and Commit**
   * Run `git add` and commit with message `feat: implement exp5 unambiguous scaling sweep and SVD projection`.
 

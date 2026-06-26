@@ -1,0 +1,9 @@
+N,W,mode,projection,corpus_seeds,recall_at_1_mean,recall_at_1_std,margin_mean,margin_std
+3200,128,capacity,identity,5,0.9256,0.0,1.1644,0.0
+3200,128,capacity,random,5,0.7922,0.0,0.2947,0.0
+3200,128,capacity,svd,5,0.9272,0.0,0.7089,0.0
+3200,128,capacity,learned,5,0.7959,0.0,0.5824,0.0
+3200,128,generalization,identity,5,0.9306,0.0,1.2951,0.0
+3200,128,generalization,random,5,0.8042,0.0,0.3423,0.0
+3200,128,generalization,svd,5,0.8819,0.0,0.7745,0.0
+3200,128,generalization,learned,5,0.8312,0.0,0.695,0.0

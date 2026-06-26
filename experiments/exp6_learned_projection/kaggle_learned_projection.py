@@ -410,9 +410,6 @@ def run_sweep(args):
         fact_sizes = [n for n in fact_sizes if n <= args.N_max]
         if not fact_sizes:
             fact_sizes = [args.N_max]
-        widths = [w for w in widths if w <= args.N_max]
-        if not widths:
-            widths = [args.N_max]
             
     seeds = [42, 101, 202]
     
@@ -483,7 +480,9 @@ def run_sweep(args):
             for W in widths:
                 print(f"    W = {W}:")
                 
-                rand_recalls = []
+                rand_recalls_at_1 = []
+                rand_recalls_at_5 = []
+                rand_recalls_at_10 = []
                 rand_margins = []
                 rand_neighbor_recalls = []
                 rand_distortions = []
@@ -496,7 +495,9 @@ def run_sweep(args):
                     R = R / (R.norm(p=2, dim=1, keepdim=True) + 1e-8)
                     
                     res = evaluate_projection(eval_statements_emb, eval_queries_emb, eval_facts, "random", R=R, original_centroids=eval_original_centroids, device=device)
-                    rand_recalls.append(res["recall_at_1"])
+                    rand_recalls_at_1.append(res["recall_at_1"])
+                    rand_recalls_at_5.append(res["recall_at_5"])
+                    rand_recalls_at_10.append(res["recall_at_10"])
                     rand_margins.append(res["mean_margin"])
                     rand_p5_margins.append(res["p5_margin"])
                     rand_neighbor_recalls.append(res["neighbor_recall_at_10"])
@@ -504,9 +505,9 @@ def run_sweep(args):
                     rand_decision_gaps.append(res["mean_decision_gap"])
                     
                 random_res = {
-                    "recall_at_1": np.mean(rand_recalls),
-                    "recall_at_5": np.mean(rand_recalls),
-                    "recall_at_10": np.mean(rand_recalls),
+                    "recall_at_1": np.mean(rand_recalls_at_1),
+                    "recall_at_5": np.mean(rand_recalls_at_5),
+                    "recall_at_10": np.mean(rand_recalls_at_10),
                     "mean_rank": 0.0,
                     "median_rank": 0.0,
                     "mean_margin": np.mean(rand_margins),
@@ -538,7 +539,7 @@ def run_sweep(args):
                 all_results.append(svd_res)
                 print(f"      SVD:      Recall@1={svd_res['recall_at_1']*100:.1f}%, Margin={svd_res['mean_margin']:.2f}")
                 
-                epochs_to_train = 5 if args.N_max is not None else 100
+                epochs_to_train = 25 if args.pilot else 100
                 if mode == "capacity":
                     learned_model = train_learned_projection(statements_flat, N, W, epochs=epochs_to_train, lr=1e-3, device=device)
                 else:
@@ -616,6 +617,39 @@ def generate_plots(results, plot_path):
     plt.savefig(plot_path, dpi=200)
     plt.close()
 
+    # Second figure: Recall@1 vs Width at the largest available N, for both modes
+    largest_N = max(r["N"] for r in results)
+    fig2, axes2 = plt.subplots(1, 2, figsize=(14, 5))
+    fig2.suptitle(f"Recall@1 vs Bottleneck Width (N={largest_N})")
+
+    for col_idx, mode in enumerate(["capacity", "generalization"]):
+        ax = axes2[col_idx]
+        ax.set_title(f"Mode {'A (Capacity)' if mode == 'capacity' else 'B (Generalization)'}")
+        ax.set_xlabel("Bottleneck Width (W)")
+        ax.set_ylabel("Recall@1")
+
+        for proj in ["random", "svd", "learned"]:
+            proj_data = [r for r in results if r["mode"] == mode and r["projection_type"] == proj and r["N"] == largest_N]
+            proj_data = sorted(proj_data, key=lambda x: x["W"])
+            if proj_data:
+                ax.plot([d["W"] for d in proj_data], [d["recall_at_1"] for d in proj_data],
+                        label=f"{proj.capitalize()}", color=colors[proj], marker=markers[proj])
+
+        # Identity baseline as a horizontal line (width-independent)
+        id_data = [r for r in results if r["mode"] == mode and r["projection_type"] == "identity" and r["N"] == largest_N]
+        if id_data:
+            id_val = id_data[0]["recall_at_1"]
+            ax.axhline(id_val, color=colors["identity"], linestyle="--", label=f"Identity (384D) = {id_val*100:.1f}%")
+
+        ax.grid(True, linestyle=":", alpha=0.5)
+        ax.legend()
+
+    plt.tight_layout()
+    width_plot_path = plot_path.replace(".png", "_width_scaling.png")
+    plt.savefig(width_plot_path, dpi=200)
+    plt.close()
+    print(f"[*] Width-scaling plot saved to {width_plot_path}")
+
 def generate_report(results, md_path, is_pilot):
     summary = defaultdict(dict)
     for r in results:
@@ -666,14 +700,213 @@ def generate_report(results, md_path, is_pilot):
                             f.write(f"| {mode.capitalize()} | {N} | {proj.capitalize()} | {r.get('mean_margin', 0.0):.2f} | {r.get('p5_margin', 0.0):.2f} | {r.get('mean_decision_gap', 0.0):.2f} |\n")
 
 # ==============================================================================
-# 7. MAIN ENTRY
+# 7. MULTI-SEED CORPUS VALIDATION
 # ==============================================================================
 
+def run_multiseed_validation(args):
+    """
+    Targeted robustness check: N=3200, W=128, both modes, across multiple corpus
+    generation seeds. Reports mean ± std for Recall@1 and mean_margin side by side
+    for Identity, SVD, Learned, and Random projections.
+
+    This is the experiment that turns promising single-corpus observations into
+    defensible claims. If trends hold here they are real; if they vary strongly
+    by corpus seed, that is equally important to know.
+    """
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    N = args.ms_N
+    W = args.ms_W
+    corpus_seeds = list(range(args.ms_corpus_seeds))
+    proj_random_seeds = [42, 101, 202]  # kept fixed — only corpus generation varies
+
+    print(f"\n{'='*65}")
+    print(f"  MULTI-SEED VALIDATION  |  N={N}  W={W}  corpus_seeds={len(corpus_seeds)}")
+    print(f"{'='*65}")
+
+    bi_encoder = SentenceTransformer("all-MiniLM-L6-v2", device=device)
+
+    # Structure: results[mode][proj] = list of (recall_at_1, mean_margin) per corpus seed
+    projections = ["identity", "random", "svd", "learned"]
+    modes = ["capacity", "generalization"]
+    results = {mode: {proj: [] for proj in projections} for mode in modes}
+
+    for corpus_seed in corpus_seeds:
+        print(f"\n--- Corpus seed {corpus_seed} ---")
+
+        # Generate a fresh fact corpus for this seed
+        random.seed(corpus_seed)
+        np.random.seed(corpus_seed)
+        facts = generate_unambiguous_facts(N)
+
+        all_statement_texts = [s for f in facts for s in f["statements"]]
+        all_query_texts = [f["query"] for f in facts]
+
+        with torch.no_grad():
+            statements_flat = bi_encoder.encode(
+                all_statement_texts, batch_size=256, convert_to_tensor=True, device=device
+            ).clone()
+            statements_emb = statements_flat.view(N, 10, -1)
+            queries_emb = bi_encoder.encode(
+                all_query_texts, batch_size=256, convert_to_tensor=True, device=device
+            ).clone()
+
+        original_centroids = statements_emb.mean(dim=1)
+
+        for mode in modes:
+            if mode == "capacity":
+                eval_facts          = facts
+                eval_statements_emb = statements_emb
+                eval_queries_emb    = queries_emb
+                eval_statements_flat = statements_flat
+                eval_original_centroids = original_centroids
+
+                svd_source = statements_flat
+            else:
+                train_size = N // 2
+                eval_facts          = facts[train_size:]
+                eval_statements_emb = statements_emb[train_size:]
+                eval_queries_emb    = queries_emb[train_size:]
+                eval_statements_flat = statements_flat[train_size * 10:]
+                eval_original_centroids = original_centroids[train_size:]
+
+                svd_source = statements_flat[:train_size * 10]
+
+            # SVD fit on the appropriate split
+            statements_mean = svd_source.mean(dim=0, keepdim=True)
+            statements_centered = svd_source - statements_mean
+            _, _, Vh = torch.linalg.svd(statements_centered.to(device), full_matrices=False)
+            Vh = Vh.cpu()
+            V_W = Vh[:W]
+
+            # ---- Identity ----
+            res = evaluate_projection(
+                eval_statements_emb, eval_queries_emb, eval_facts, "raw", device=device
+            )
+            results[mode]["identity"].append((res["recall_at_1"], res["mean_margin"]))
+            print(f"  [{mode:<15}] Identity : Recall@1={res['recall_at_1']*100:.1f}%  Margin={res['mean_margin']:.3f}")
+
+            # ---- Random (averaged over proj_random_seeds) ----
+            rand_r1s, rand_margins = [], []
+            for rseed in proj_random_seeds:
+                torch.manual_seed(rseed)
+                R = torch.randn(W, 384)
+                R = R / (R.norm(p=2, dim=1, keepdim=True) + 1e-8)
+                res = evaluate_projection(
+                    eval_statements_emb, eval_queries_emb, eval_facts,
+                    "random", R=R, original_centroids=eval_original_centroids, device=device
+                )
+                rand_r1s.append(res["recall_at_1"])
+                rand_margins.append(res["mean_margin"])
+            rand_r1   = float(np.mean(rand_r1s))
+            rand_marg = float(np.mean(rand_margins))
+            results[mode]["random"].append((rand_r1, rand_marg))
+            print(f"  [{mode:<15}] Random   : Recall@1={rand_r1*100:.1f}%  Margin={rand_marg:.3f}")
+
+            # ---- SVD ----
+            res = evaluate_projection(
+                eval_statements_emb, eval_queries_emb, eval_facts, "svd",
+                statements_mean=statements_mean, V_W=V_W,
+                original_centroids=eval_original_centroids, device=device
+            )
+            results[mode]["svd"].append((res["recall_at_1"], res["mean_margin"]))
+            print(f"  [{mode:<15}] SVD      : Recall@1={res['recall_at_1']*100:.1f}%  Margin={res['mean_margin']:.3f}")
+
+            # ---- Learned ----
+            if mode == "capacity":
+                learned_model = train_learned_projection(
+                    statements_flat, N, W, epochs=100, lr=1e-3, device=device
+                )
+            else:
+                learned_model = train_learned_projection(
+                    svd_source, N // 2, W, epochs=100, lr=1e-3, device=device
+                )
+            res = evaluate_projection(
+                eval_statements_emb, eval_queries_emb, eval_facts, "learned",
+                model=learned_model, original_centroids=eval_original_centroids, device=device
+            )
+            results[mode]["learned"].append((res["recall_at_1"], res["mean_margin"]))
+            print(f"  [{mode:<15}] Learned  : Recall@1={res['recall_at_1']*100:.1f}%  Margin={res['mean_margin']:.3f}")
+
+    # ------------------------------------------------------------------
+    # Summary table
+    # ------------------------------------------------------------------
+    csv_path = f"kaggle_multiseed_N{N}_W{W}.csv"
+    md_path  = f"kaggle_multiseed_N{N}_W{W}.md"
+
+    csv_rows = []
+    print(f"\n{'='*65}")
+    print(f"  SUMMARY  (N={N}, W={W}, {len(corpus_seeds)} corpus seeds)")
+    print(f"{'='*65}")
+
+    for mode in modes:
+        print(f"\n  Mode: {mode.upper()}")
+        print(f"  {'Projection':<12} {'Recall@1 mean±std':>20}  {'Margin mean±std':>18}")
+        print(f"  {'-'*54}")
+        for proj in projections:
+            vals = results[mode][proj]
+            r1s     = [v[0] for v in vals]
+            margins = [v[1] for v in vals]
+            r1_mean, r1_std     = np.mean(r1s)*100,     np.std(r1s)*100
+            marg_mean, marg_std = np.mean(margins),     np.std(margins)
+            print(f"  {proj:<12}  {r1_mean:5.1f}% ± {r1_std:4.1f}%          {marg_mean:+.3f} ± {marg_std:.3f}")
+            csv_rows.append({
+                "N": N, "W": W, "mode": mode, "projection": proj,
+                "corpus_seeds": len(corpus_seeds),
+                "recall_at_1_mean": round(r1_mean / 100, 4),
+                "recall_at_1_std":  round(r1_std  / 100, 4),
+                "margin_mean": round(marg_mean, 4),
+                "margin_std":  round(marg_std,  4),
+            })
+
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(csv_rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(csv_rows)
+    print(f"\n[*] CSV saved to {csv_path}")
+
+    # Markdown report
+    with open(md_path, "w") as f:
+        f.write(f"# Multi-Seed Validation: N={N}, W={W}\n\n")
+        f.write(f"**Corpus seeds:** {len(corpus_seeds)}  |  **Random projection seeds:** {proj_random_seeds}\n\n")
+        for mode in modes:
+            f.write(f"## Mode: {mode.capitalize()}\n\n")
+            f.write("| Projection | Recall@1 mean ± std | Margin mean ± std |\n")
+            f.write("| :--- | :---: | :---: |\n")
+            for proj in projections:
+                vals = results[mode][proj]
+                r1s     = [v[0] for v in vals]
+                margins = [v[1] for v in vals]
+                r1_mean, r1_std     = np.mean(r1s)*100, np.std(r1s)*100
+                marg_mean, marg_std = np.mean(margins), np.std(margins)
+                f.write(f"| {proj.capitalize()} | {r1_mean:.1f}% ± {r1_std:.1f}% | {marg_mean:+.3f} ± {marg_std:.3f} |\n")
+            f.write("\n")
+    print(f"[*] Report saved to {md_path}")
+
+
+# ==============================================================================
+# 8. MAIN ENTRY — runs everything automatically, no flags needed
+# ==============================================================================
+
+class _Args:
+    """Hardcoded config — edit these values if you want to change anything."""
+    # Full sweep settings
+    pilot  = False   # False = full sweep (N up to 3200). Set True for a quick test.
+    N_max  = None    # Leave as None for the full run.
+    # Multi-seed validation settings
+    ms_N            = 3200  # Which N to stress-test
+    ms_W            = 128   # Which width to stress-test
+    ms_corpus_seeds = 5     # How many independent fact corpora to generate
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Experiment 6: Learned & SVD Projections Sweep")
-    parser.add_argument("--pilot", action="store_true", help="Run a smaller pilot sweep N=[100, 400, 1600]")
-    parser.add_argument("--N_max", type=int, default=None, help="Force maximum N size for debugging")
-    
-    args, unknown = parser.parse_known_args()
+    args = _Args()
     set_seed(42)
+
+    print("\n" + "="*65)
+    print("  STEP 1 OF 2: Full sweep across all N and W")
+    print("="*65)
     run_sweep(args)
+
+    print("\n" + "="*65)
+    print("  STEP 2 OF 2: Multi-seed robustness validation")
+    print("="*65)
+    run_multiseed_validation(args)
